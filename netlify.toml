@@ -1,0 +1,10 @@
+# Netlify: build the Vite app, serve functions from netlify/functions (mapped to /api/* in each
+# function's config), and send every other path to the single-page app.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

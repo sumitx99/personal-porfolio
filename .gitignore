@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# API keys
+.env
+.env.*
+!.env.example
+
+# Cloudflare local dev state
+.wrangler
