@@ -4,6 +4,8 @@ export const profile = {
   role: 'Software Engineer · AI/ML',
   location: 'Chandigarh, India',
   email: 'sumitranjan2207@gmail.com',
+  // Booking page for the "Let's talk" button, e.g. 'https://cal.com/sumitx99/30min'. Empty = opens an email.
+  booking: 'https://cal.com/skranjan/30min?overlayCalendar=true',
   github: 'https://github.com/sumitx99',
   githubUser: 'sumitx99',
   linkedin: 'https://www.linkedin.com/in/sumitx99/',
@@ -334,7 +336,10 @@ export const linkedinStats = [
 ]
 
 // Competitive programming stats from Codolio (snapshot, Oct 2026).
+// The Coding page reads everything live from Codolio (api/codolio.js) using `handle`.
+// The numbers below are a snapshot for the home page tile and the chat bot only.
 export const coding = {
+  handle: 'sumit09',
   profile: 'https://codolio.com/profile/sumit09',
   totals: [
     ['630', 'questions solved'],

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { ContactShadows, Environment, Float, Lightformer } from '@react-three/drei'
 import * as THREE from 'three'
+import { useFrameloop } from '../hooks'
 
 const ACCENT = '#d4ff3a'
 
@@ -157,8 +158,10 @@ function HoverPad() {
 }
 
 export default function RobotScene({ talking, excited }) {
+  const ref = useRef()
+  const frameloop = useFrameloop(ref)
   return (
-    <Canvas camera={{ position: [0, 0.1, 3.7], fov: 38 }} dpr={[1, 2]} gl={{ alpha: true, antialias: true }}>
+    <Canvas ref={ref} frameloop={frameloop} camera={{ position: [0, 0.1, 3.7], fov: 38 }} dpr={[1, 1.5]} gl={{ alpha: true, antialias: true }}>
       <ambientLight intensity={0.7} />
       <directionalLight position={[2, 3, 4]} intensity={1.8} />
       {/* Studio reflections built from light panels: no HDR file to download. */}

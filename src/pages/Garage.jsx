@@ -13,7 +13,7 @@ export default function Garage() {
   const [compound, setCompound] = useState('medium')
   const [pending, setPending] = useState(null)
   const [pitStart, setPitStart] = useState(null)
-  const [radio, setRadio] = useState('Car’s on the turntable. Pick a tyre and the crew will change all four.')
+  const [radio, setRadio] = useState('Car’s in the pit box. Pick a tyre and the crew will change all four.')
   const [last, setLast] = useState(null)
   const [best, setBest] = useState(null)
   const [stops, setStops] = useState(0)
@@ -61,7 +61,7 @@ export default function Garage() {
       />
 
       <div className="garage">
-        <div className="garage-stage">
+        <div className="garage-stage" data-lenis-prevent-wheel>
           <F1Garage
             team={team}
             paint={paint}
@@ -161,13 +161,12 @@ export default function Garage() {
                 <input type="color" value={paint || team.color} onChange={(e) => setPaint(e.target.value)} />
               </label>
             </div>
+            <label className="toggle">
+              <input type="checkbox" checked={autoRotate} onChange={(e) => setAutoRotate(e.target.checked)} />
+              <span />
+              Auto-rotate camera
+            </label>
           </section>
-
-          <label className="toggle">
-            <input type="checkbox" checked={autoRotate} onChange={(e) => setAutoRotate(e.target.checked)} />
-            <span />
-            Auto-rotate camera
-          </label>
         </aside>
       </div>
 
@@ -193,7 +192,11 @@ export default function Garage() {
             {i < ready.length - 1 ? ', ' : ''}
           </span>
         ))}
-        . Pit crew: Mixamo character from the three.js examples. Models compressed for the web; team names and liveries belong to their owners. A fan project, not affiliated with F1 or any team.
+        . Pit crew: Mixamo character from the three.js examples. Pit lane and garage floor textures from{' '}
+        <a href="https://polyhaven.com/a/asphalt_pit_lane" target="_blank" rel="noreferrer">
+          Poly Haven
+        </a>{' '}
+        (CC0). Models compressed for the web; team names and liveries belong to their owners. A fan project, not affiliated with F1 or any team.
       </p>
     </div>
   )

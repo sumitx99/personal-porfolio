@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { linkedinStats, profile } from '../data'
 import { useReveal } from '../hooks'
 import { PageHead } from '../components/SectionHead'
+import SiteTraffic from '../components/SiteTraffic'
+import ContributionGraph from '../components/ContributionGraph'
+import { useCodolio } from '../codolio'
 
 const CACHE_KEY = 'gh-stats-v1'
 
@@ -99,6 +102,7 @@ function YearColumns({ data }) {
 }
 
 export default function Analytics() {
+  const codolio = useCodolio()
   const [data, setData] = useState(readCache)
   const [error, setError] = useState(false)
 
@@ -112,7 +116,7 @@ export default function Analytics() {
       .catch(() => setError(true))
   }, [data])
 
-  useReveal([data, error])
+  useReveal([data, error, codolio.status])
 
   const tiles = data
     ? [
@@ -128,8 +132,12 @@ export default function Analytics() {
       <PageHead
         eyebrow={data ? 'Live from the GitHub API' : error ? 'GitHub is rate-limiting right now' : 'Fetching from GitHub…'}
         title="Analytics"
-        intro="The numbers behind the work — what I build with, how often I ship, and what I touched last."
+        intro="Who’s visiting this site, plus the numbers behind the work: what I build with, how often I ship, and what I touched last."
       />
+
+      <SiteTraffic />
+
+      <h2 className="sub-head">GitHub</h2>
 
       {error && (
         <p className="notice reveal">
@@ -166,18 +174,13 @@ export default function Analytics() {
             </section>
           </div>
 
-          <section className="chart-card reveal">
-            <h3>Contribution graph</h3>
-            <p className="muted">Last 12 months of commits on GitHub.</p>
-            <div className="contrib">
-              <img
-                src={`https://ghchart.rshah.org/d4ff3a/${profile.githubUser}`}
-                alt={`GitHub contribution graph for ${profile.githubUser}`}
-                loading="lazy"
-                onError={(e) => (e.currentTarget.closest('.chart-card').style.display = 'none')}
-              />
-            </div>
-          </section>
+          {codolio.data?.dev?.activity && (
+            <section className="chart-card reveal">
+              <h3>Contribution graph</h3>
+              <p className="muted">GitHub contributions per day, live via Codolio. Pick a year or a month.</p>
+              <ContributionGraph activity={codolio.data.dev.activity} profileUrl={codolio.data.dev.url} />
+            </section>
+          )}
 
           <section className="chart-card reveal">
             <h3>Recently pushed</h3>

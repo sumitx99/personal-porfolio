@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useThree } from '@react-three/fiber'
 
 export function useIsSmall(query = '(max-width: 760px)') {
   const [small, setSmall] = useState(() => window.matchMedia(query).matches)
@@ -29,4 +30,70 @@ export function useReveal(deps = []) {
     return () => io.disconnect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
+}
+
+// One shared scroll listener. While the page is scrolling, 3D canvases skip drawing so the browser
+// can spend every frame on the scroll itself; they pick up again a moment after it stops.
+let scrolling = false
+let idle
+const subscribers = new Set()
+const notify = () => subscribers.forEach((f) => f())
+function onScroll() {
+  if (!scrolling) {
+    scrolling = true
+    notify()
+  }
+  clearTimeout(idle)
+  idle = setTimeout(() => {
+    scrolling = false
+    notify()
+  }, 160)
+}
+function subscribeScroll(f) {
+  if (!subscribers.size) window.addEventListener('scroll', onScroll, { passive: true })
+  subscribers.add(f)
+  return () => {
+    subscribers.delete(f)
+    if (!subscribers.size) window.removeEventListener('scroll', onScroll)
+  }
+}
+
+export function useScrolling() {
+  return useSyncExternalStore(subscribeScroll, () => scrolling)
+}
+
+// Frameloop for a <Canvas ref={ref}>: renders only while on screen, and pauses during scrolling.
+export function useFrameloop(ref, { pauseOnScroll = true } = {}) {
+  const [visible, setVisible] = useState(true)
+  const isScrolling = useScrolling()
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { rootMargin: '80px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [ref])
+  return visible && !(pauseOnScroll && isScrolling) ? 'always' : 'never'
+}
+
+// OrbitControls blocks all touch gestures on its canvas. This lets a vertical swipe scroll the page
+// while a sideways drag still spins the model.
+// Drop inside a <Canvas> that has OrbitControls.
+export function TouchScroll() {
+  useTouchScroll(useThree((s) => s.gl))
+  return null
+}
+
+// The controls reset touch-action whenever they reconnect, so keep re-applying it.
+export function useTouchScroll(gl) {
+  useEffect(() => {
+    const el = gl.domElement
+    const fix = () => {
+      if (el.style.touchAction !== 'pan-y') el.style.touchAction = 'pan-y'
+    }
+    fix()
+    const mo = new MutationObserver(fix)
+    mo.observe(el, { attributes: true, attributeFilter: ['style'] })
+    return () => mo.disconnect()
+  }, [gl])
 }

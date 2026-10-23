@@ -1,13 +1,13 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import * as THREE from 'three'
 import { PIT_TIMELINE as T } from '../f1'
+import { dressCrew, makeBlanketTyre, makeHose, makeJack, makeWheelGun, updateHose } from './PitGear'
 
 // Rigged, animated human (Mixamo "Vanguard" from the three.js examples), dressed as a pit mechanic.
 const MODEL = '/crew/mechanic.glb'
-const ACCENT = '#d4ff3a'
 
 const ease = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x))
 const span = (t, a, b) => ease((t - a) / (b - a))
@@ -19,7 +19,7 @@ const POSES = {
   jack: { Spine: [0.55, 0, 0], Spine1: [0.2, 0, 0], RightArm: [0, 0, 1.1], LeftArm: [0, 0, -1.1], RightForeArm: [0, -0.4, 0], LeftForeArm: [0, 0.4, 0], LeftUpLeg: [-0.35, 0, 0], LeftLeg: [0.5, 0, 0], drop: 0.08 },
 }
 
-function makeMember(gltf, suit, role) {
+function makeMember(gltf, suit, trim, role) {
   const root = cloneSkinned(gltf.scene)
   const bones = {}
   root.traverse((o) => {
@@ -37,29 +37,16 @@ function makeMember(gltf, suit, role) {
   })
   root.updateMatrixWorld(true)
 
-  // White race helmet and a wheel gun, attached to the skeleton so they follow the animation.
-  const ws = new THREE.Vector3()
-  const helmet = new THREE.Mesh(
-    new THREE.SphereGeometry(0.13, 28, 20),
-    new THREE.MeshPhysicalMaterial({ color: '#f4f4f4', clearcoat: 1, roughness: 0.18 })
-  )
-  bones.Head.getWorldScale(ws)
-  helmet.scale.setScalar(1 / ws.x)
-  helmet.position.set(0, 0.1 / ws.x, 0.015 / ws.x)
-  helmet.castShadow = true
-  bones.Head.add(helmet)
+  dressCrew(bones, trim, role)
 
-  if (role !== 'jack') {
-    const gun = new THREE.Group()
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.26, 14), new THREE.MeshStandardMaterial({ color: '#2b2d33', metalness: 0.8, roughness: 0.3 }))
-    body.rotation.x = Math.PI / 2
-    const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.06, 10), new THREE.MeshStandardMaterial({ color: ACCENT, emissive: ACCENT, emissiveIntensity: 0.4 }))
-    tip.rotation.x = Math.PI / 2
-    tip.position.z = 0.15
-    gun.add(body, tip)
+  // Gunners carry a pneumatic wheel gun in the right hand.
+  let gun = null
+  if (role === 'gunner') {
+    const ws = new THREE.Vector3()
+    gun = makeWheelGun()
     bones.RightHand.getWorldScale(ws)
     gun.scale.setScalar(1 / ws.x)
-    gun.position.set(0, 0.08 / ws.x, 0.05 / ws.x)
+    gun.position.set(0, 0.09 / ws.x, 0.04 / ws.x)
     bones.RightHand.add(gun)
   }
 
@@ -70,7 +57,7 @@ function makeMember(gltf, suit, role) {
   run.play()
   idle.play()
   run.timeScale = 1.35
-  return { root, bones, mixer, run, idle, role, pose: POSES[role] }
+  return { root, bones, mixer, run, idle, role, gun, pose: POSES[role] }
 }
 
 // Work spots around the car; each crew member sprints in from `home` and back out.
@@ -79,11 +66,11 @@ function layout(rig) {
   rig.wheels.forEach((w) => {
     const ox = w.base.x + w.outer
     const dz = w.front ? 1 : -1
-    spots.push({ role: 'gunner', work: new THREE.Vector3(ox + w.side * 0.62, 0, w.base.z), face: -w.side, axis: 'x' })
+    spots.push({ role: 'gunner', work: new THREE.Vector3(ox + w.side * 0.62, 0, w.base.z), face: -w.side, axis: 'x', wheel: w })
     spots.push({ role: 'carrier', work: new THREE.Vector3(ox + w.side * 0.95, 0, w.base.z + dz * 0.95), face: -w.side, axis: 'x' })
   })
-  spots.push({ role: 'jack', work: new THREE.Vector3(0, 0, rig.maxZ + 0.55), face: -1, axis: 'z' })
-  spots.push({ role: 'jack', work: new THREE.Vector3(0, 0, rig.minZ - 0.55), face: 1, axis: 'z' })
+  spots.push({ role: 'jack', work: new THREE.Vector3(0, 0, rig.maxZ + 0.85), face: -1, axis: 'z', reach: 1.18 })
+  spots.push({ role: 'jack', work: new THREE.Vector3(0, 0, rig.minZ - 0.85), face: 1, axis: 'z', reach: 0.88 })
   spots.forEach((s) => {
     s.home = s.work.clone()
     if (s.axis === 'x') s.home.x += -s.face * 3.4
@@ -92,17 +79,34 @@ function layout(rig) {
   return spots
 }
 
-const yawTo = (dx, dz) => Math.atan2(dx, dz)
+// The Mixamo character faces -Z, so turn it half a revolution to face the direction we want.
+const yawTo = (dx, dz) => Math.atan2(dx, dz) + Math.PI
 
-export default function PitCrew({ rig, suit, pitStart }) {
+export default function PitCrew({ rig, suit, trim, pitStart }) {
   const gltf = useGLTF(MODEL)
+  const group = useRef()
   const spots = useMemo(() => layout(rig), [rig])
-  const crew = useMemo(() => spots.map((s) => makeMember(gltf, suit, s.role)), [gltf, spots, suit])
+  const crew = useMemo(() => spots.map((s) => makeMember(gltf, suit, trim, s.role)), [gltf, spots, suit, trim])
+
+  // Equipment that isn't held: air hoses, the two jacks and a blanket-wrapped fresh tyre per corner.
+  const gear = useMemo(() => {
+    const hoses = spots.map((s) => (s.role === 'gunner' ? makeHose() : null))
+    const jacks = spots.map((s) => (s.role === 'jack' ? makeJack(trim, s.reach) : null))
+    const tyres = rig.wheels.map((w) => {
+      const tyre = makeBlanketTyre(w.radius, w.front ? 0.37 : 0.44, trim)
+      const dz = w.front ? 1 : -1
+      const work = new THREE.Vector3(w.base.x + w.outer + w.side * 0.55, w.radius * 1.04, w.base.z - dz * 0.9)
+      const home = work.clone().setX(work.x + w.side * 3.4)
+      const hub = new THREE.Vector3(w.base.x + w.side * 0.75, w.base.y, w.base.z)
+      return { tyre, work, home, hub, side: w.side }
+    })
+    return { hoses, jacks, tyres }
+  }, [spots, rig, trim])
 
   useEffect(() => () => crew.forEach((m) => m.mixer.stopAllAction()), [crew])
 
   useFrame((state, delta) => {
-    const t = pitStart == null ? Infinity : state.clock.elapsedTime - pitStart
+    const t = pitStart == null ? Infinity : (state.clock.elapsedTime - pitStart)
     const inPit = t < T.leave
     const goIn = inPit ? span(t, 0, T.arrive) : 0
     const goOut = inPit ? span(t, T.jackDown, T.leave) : 1
@@ -138,12 +142,52 @@ export default function PitCrew({ rig, suit, pitStart }) {
       }
       m.root.position.y = -p.drop * working
     })
+
+    const lift = inPit ? span(t, T.arrive, T.jackUp) * (1 - span(t, T.wheelsOn, T.jackDown)) : 0
+    const inlet = new THREE.Vector3()
+    spots.forEach((s, i) => {
+      // Hose from the gun to the air line at the edge of the box, following the gunner.
+      const hose = gear.hoses[i]
+      if (hose) {
+        hose.visible = crew[i].root.visible
+        if (hose.visible) {
+          crew[i].gun.updateWorldMatrix(true, false)
+          inlet.copy(crew[i].gun.userData.inlet)
+          crew[i].gun.localToWorld(inlet)
+          group.current.worldToLocal(inlet)
+          updateHose(hose, inlet, -s.face, s.work.z)
+        }
+      }
+      // Jack rolls in ahead of its operator, then levers the car up in time with the lift.
+      const jack = gear.jacks[i]
+      if (jack) {
+        jack.visible = crew[i].root.visible
+        const pos = crew[i].root.position
+        jack.position.set(pos.x, 0, pos.z + s.face * 0.32)
+        jack.rotation.y = s.face > 0 ? 0 : Math.PI
+        jack.userData.lever.rotation.x = -0.42 * lift
+        jack.userData.wheels.rotation.x = (pos.z * s.face) / 0.1
+      }
+    })
+    // Fresh tyres roll in wrapped in blankets; at wheels-off they head for the hub and get fitted.
+    gear.tyres.forEach((g) => {
+      g.tyre.visible = inPit && t < T.wheelsOff + 0.3
+      if (!g.tyre.visible) return
+      const fit = span(t, T.wheelsOff, T.wheelsOff + 0.3)
+      g.tyre.position.lerpVectors(g.home, g.work, at).lerp(g.hub, fit)
+      g.tyre.rotation.x = (g.tyre.position.x * g.side) / 0.35
+    })
   })
 
   return (
-    <group>
+    <group ref={group}>
       {crew.map((m, i) => (
         <primitive key={i} object={m.root} />
+      ))}
+      {gear.hoses.map((h, i) => h && <primitive key={`h${i}`} object={h} />)}
+      {gear.jacks.map((j, i) => j && <primitive key={`j${i}`} object={j} />)}
+      {gear.tyres.map((g, i) => (
+        <primitive key={`t${i}`} object={g.tyre} />
       ))}
     </group>
   )

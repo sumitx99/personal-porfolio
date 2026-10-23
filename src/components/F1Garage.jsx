@@ -1,11 +1,12 @@
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { ContactShadows, Environment, Html, Lightformer, MeshReflectorMaterial, OrbitControls, useGLTF, useProgress } from '@react-three/drei'
+import { ContactShadows, Environment, Html, Lightformer, OrbitControls, useGLTF, useProgress } from '@react-three/drei'
 import * as THREE from 'three'
 import { COMPOUNDS, PIT_TIMELINE as T } from '../f1'
 import PitCrew from './PitCrew'
+import PitLane from './PitLane'
+import { TouchScroll, useFrameloop } from '../hooks'
 
-const ACCENT = '#d4ff3a'
 // Road-wheel parts; steering wheels are named "…_steeringwheel" / "…_sw" and must stay in the cockpit.
 const WHEEL_PART = /(sidewall|tread|tyre|tire|rim|wheel|discs|hub_nut)/i
 const NOT_WHEEL = /(steer|_sw\b|sw_)/i
@@ -169,7 +170,7 @@ function CompoundBand({ wheel, compound }) {
 function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap }) {
   const { scene: original } = useGLTF(team.file)
 
-  // Clone per mount and split the wheels once; also centre the car on the turntable.
+  // Clone per mount and split the wheels once; also centre the car in its pit box.
   const rig = useMemo(() => {
     const scene = original.clone(true)
     scene.traverse((o) => {
@@ -212,7 +213,7 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap }) {
   }, [pitStart])
 
   useFrame((state) => {
-    const t = pitStart == null ? Infinity : state.clock.elapsedTime - pitStart
+    const t = pitStart == null ? Infinity : (state.clock.elapsedTime - pitStart)
     const inPit = t < T.leave
     const lift = inPit ? span(t, T.arrive, T.jackUp) * (1 - span(t, T.wheelsOn, T.jackDown)) : 0
     const out = inPit ? span(t, T.jackUp, T.wheelsOff) * (1 - span(t, T.wheelsOff, T.wheelsOn)) : 0
@@ -246,7 +247,7 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap }) {
           <CompoundBand wheel={w} compound={compound} />
         </primitive>
       ))}
-      <PitCrew rig={rig} suit={team.crew} pitStart={pitStart} />
+      <PitCrew rig={rig} suit={team.crew} trim={team.color} pitStart={pitStart} />
     </group>
   )
 }
@@ -295,56 +296,6 @@ function Rain() {
   )
 }
 
-function Showroom({ small }) {
-  return (
-    <group>
-      {/* turntable */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]} receiveShadow>
-        <circleGeometry args={[4.2, 96]} />
-        {small ? (
-          <meshStandardMaterial color="#141519" roughness={0.25} metalness={0.6} />
-        ) : (
-          <MeshReflectorMaterial
-            blur={[400, 120]}
-            resolution={1024}
-            mixBlur={1}
-            mixStrength={28}
-            roughness={0.85}
-            depthScale={1}
-            minDepthThreshold={0.4}
-            maxDepthThreshold={1.2}
-            color="#121317"
-            metalness={0.6}
-          />
-        )}
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
-        <ringGeometry args={[4.17, 4.22, 128]} />
-        <meshBasicMaterial color={ACCENT} toneMapped={false} transparent opacity={0.55} />
-      </mesh>
-      {/* outer floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.002, 0]} receiveShadow>
-        <circleGeometry args={[30, 64]} />
-        <meshStandardMaterial color="#0c0c0e" roughness={0.9} />
-      </mesh>
-      {/* curved backdrop with light strips */}
-      <mesh position={[0, 3, 0]}>
-        <cylinderGeometry args={[11, 11, 7, 96, 1, true]} />
-        <meshStandardMaterial color="#1a1c22" side={THREE.BackSide} roughness={1} />
-      </mesh>
-      {[...Array(14)].map((_, i) => {
-        const a = (i / 14) * Math.PI * 2
-        return (
-          <mesh key={i} position={[Math.cos(a) * 10.9, 3.4, Math.sin(a) * 10.9]} rotation={[0, -a - Math.PI / 2, 0]}>
-            <planeGeometry args={[0.06, 4.5]} />
-            <meshBasicMaterial color="#9aa0aa" transparent opacity={0.25} />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
 // Pulls the camera back on tall, narrow screens so the whole car stays in frame.
 function FitCamera() {
   const { camera, size } = useThree()
@@ -357,6 +308,19 @@ function FitCamera() {
   return null
 }
 
+// Keeps the orbiting camera inside the pit lane: never behind the pit wall fence or the garage back wall.
+function CameraBounds() {
+  useFrame(({ camera }) => {
+    const p = camera.position
+    if (p.x <= 8.4 && p.x >= -14.5) return
+    const lim = p.x > 0 ? 8.4 : -14.5
+    const k = lim / p.x
+    p.x = lim
+    p.z *= k
+  })
+  return null
+}
+
 // Exposes the render clock so the page can stamp pit stops with the same time base.
 function ClockBridge({ clockRef }) {
   useFrame((state) => {
@@ -366,27 +330,34 @@ function ClockBridge({ clockRef }) {
 }
 
 export default function F1Garage({ team, compound, paint, pitStart, onPitDone, onWheelSwap, autoRotate, clockRef, small }) {
+  const canvas = useRef()
+  const frameloop = useFrameloop(canvas)
   return (
-    <Canvas shadows dpr={[1, small ? 1.5 : 2]} camera={{ position: [4.6, 1.7, 4.6], fov: 34 }} gl={{ antialias: true }}>
+    <Canvas ref={canvas} frameloop={frameloop} shadows dpr={[1, small ? 1.25 : 1.5]} camera={{ position: [5.2, 1.9, 4.2], fov: 34 }} gl={{ antialias: true }}>
+      <TouchScroll />
       <ClockBridge clockRef={clockRef} />
       <FitCamera />
-      <color attach="background" args={['#0d0e11']} />
-      <fog attach="fog" args={['#0d0e11', 14, 30]} />
-      <hemisphereLight args={['#ffffff', '#16171b', 0.6]} />
+      <CameraBounds />
+      <color attach="background" args={['#06080c']} />
+      <fog attach="fog" args={['#06080c', 20, 60]} />
+      <hemisphereLight args={['#cfd8ff', '#16171b', 0.55]} />
       <directionalLight position={[5, 9, 6]} intensity={2.4} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004}>
         <orthographicCamera attach="shadow-camera" args={[-6, 6, 6, -6, 0.1, 30]} />
       </directionalLight>
       <spotLight position={[0, 9, 0]} angle={0.5} penumbra={0.9} intensity={120} />
-      {/* Studio light panels: these make the reflections in the paint. */}
+      {/* Night-race lighting for reflections: the gantry LEDs overhead, the bright garage mouth on one
+          side and the floodlights over the pit wall on the other. */}
       <Environment resolution={512}>
-        <Lightformer form="rect" intensity={4} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 2.5, 1]} />
-        <Lightformer form="rect" intensity={2} position={[-7, 2, 2]} rotation-y={Math.PI / 2} scale={[10, 1.6, 1]} />
-        <Lightformer form="rect" intensity={2} position={[7, 2, -2]} rotation-y={-Math.PI / 2} scale={[10, 1.6, 1]} />
-        <Lightformer form="rect" intensity={1.2} position={[0, 2, -8]} scale={[14, 2, 1]} />
-        <Lightformer form="ring" intensity={0.8} color={ACCENT} position={[0, 3, 8]} scale={3} />
+        <Lightformer form="rect" intensity={4} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[8, 2.5, 1]} />
+        <Lightformer form="rect" intensity={2.4} position={[-7, 2.2, 0]} rotation-y={Math.PI / 2} scale={[12, 4, 1]} />
+        <Lightformer form="rect" intensity={1.4} color="#dfe6ff" position={[12, 9, 0]} rotation-y={-Math.PI / 2} scale={[30, 2, 1]} />
+        <Lightformer form="rect" intensity={0.6} position={[0, 2, -12]} scale={[14, 2, 1]} />
+        <Lightformer form="rect" intensity={0.6} position={[0, 2, 12]} rotation-y={Math.PI} scale={[14, 2, 1]} />
       </Environment>
 
-      <Showroom small={small} />
+      <Suspense fallback={null}>
+        <PitLane team={team} wet={compound === 'wet'} pitStart={pitStart} small={small} />
+      </Suspense>
       <Suspense fallback={<Loader />}>
         <Car key={team.id} team={team} compound={compound} paint={paint} pitStart={pitStart} onPitDone={onPitDone} onWheelSwap={onWheelSwap} />
       </Suspense>

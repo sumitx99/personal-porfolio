@@ -124,7 +124,7 @@ export default function ChatBot() {
             </button>
           </header>
 
-          <div className="bot-list" ref={listRef} aria-live="polite">
+          <div className="bot-list" ref={listRef} aria-live="polite" data-lenis-prevent>
             {messages.map((m, i) => (
               <div key={i} className={`bot-msg ${m.role}`}>
                 <RichText text={m.content} />

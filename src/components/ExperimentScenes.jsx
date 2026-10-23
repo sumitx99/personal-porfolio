@@ -587,7 +587,7 @@ export function SceneCanvas() {
   return (
     <Canvas
       className="scene-canvas"
-      dpr={[1, 1.75]}
+      dpr={[1, 1.25]}
       gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
       style={{ position: 'fixed', inset: 0, pointerEvents: 'none' }}
     >

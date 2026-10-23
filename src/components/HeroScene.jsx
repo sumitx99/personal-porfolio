@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Float, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
+import { useFrameloop } from '../hooks'
 
 const ACCENT = '#d4ff3a'
 const SOFT = '#8a8f98'
@@ -198,10 +199,14 @@ function Scene({ small }) {
 }
 
 export default function HeroScene({ small }) {
+  const ref = useRef()
+  const frameloop = useFrameloop(ref)
   return (
     <Canvas
+      ref={ref}
+      frameloop={frameloop}
       camera={{ position: [0, 0, 8], fov: 45 }}
-      dpr={[1, small ? 1.5 : 2]}
+      dpr={[1, small ? 1.25 : 1.5]}
       gl={{ antialias: !small, powerPreference: 'high-performance', alpha: true }}
     >
       <Scene small={small} />
