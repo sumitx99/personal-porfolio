@@ -1,0 +1,16 @@
+// Cloudflare Workers config for `npx wrangler deploy`. Static files come from dist/ (built by
+// `npm run build`); only /api/* runs the Worker in worker/index.js. Secrets such as
+// ANTHROPIC_API_KEY are set in the dashboard (Worker → Settings → Variables and Secrets), not here.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "personal-porfolio",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true }
+}

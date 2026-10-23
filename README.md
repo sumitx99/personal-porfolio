@@ -25,6 +25,7 @@ Three small endpoints back the site. Their code lives in `server/` and only uses
 
 | Host | Wrapper files | Notes |
 |---|---|---|
+| Cloudflare Workers | `worker/index.js` + `wrangler.jsonc` | Build command `npm run build`, deploy command `npx wrangler deploy`. `name` in `wrangler.jsonc` must match the Worker's name in the dashboard. Add the variables under the Worker → Settings → Variables and Secrets. |
 | Cloudflare Pages | `functions/api/*.js` | Build command `npm run build`, output `dist`. Add the variables under Settings → Variables and Secrets. |
 | Vercel | `api/*.js` + `vercel.json` | Framework preset Vite. Add the variables under Settings → Environment Variables. |
 | Netlify | `netlify/functions/*.mjs` + `netlify.toml` | Settings come from `netlify.toml`. Add the variables under Site configuration → Environment variables. |
