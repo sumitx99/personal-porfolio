@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Float, PerspectiveCamera, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
@@ -571,6 +571,78 @@ const SCENES = {
   'Drug Review Sentiment': Drug,
 }
 
+// Phones and tablets keep only a handful of WebGL canvases alive per page (Android Chrome drops the
+// oldest past ~8), so only cards near the screen get a canvas, up to a fixed budget.
+const BUDGET = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches ? 5 : 10
+const live = new Map() // stage element -> release()
+const waiting = new Set() // retry callbacks of cards that want a canvas but found the budget full
+
+const distance = (el) => {
+  const r = el.getBoundingClientRect()
+  return Math.abs(r.top + r.height / 2 - window.innerHeight / 2)
+}
+
+// Ask for a canvas slot. When the budget is full, the card furthest from the screen gives its slot
+// up, but only if it is further away than the one asking.
+function claim(el, release) {
+  if (live.has(el)) return true
+  if (live.size >= BUDGET) {
+    let far = null
+    live.forEach((_, other) => {
+      if (!far || distance(other) > distance(far)) far = other
+    })
+    if (!far || distance(far) <= distance(el)) return false
+    live.get(far)()
+    live.delete(far)
+  }
+  live.set(el, release)
+  return true
+}
+
+function free(el) {
+  if (!live.delete(el)) return
+  waiting.forEach((retry) => retry())
+}
+
+// Mounts a card's canvas only while the card is near the screen (and a slot is free); unmounting
+// releases the WebGL context.
+function useNearScreen(ref) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let near = false
+    const retry = () => {
+      if (near && claim(el, () => setMounted(false))) {
+        waiting.delete(retry)
+        setMounted(true)
+      }
+    }
+    const enter = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      near = true
+      waiting.add(retry)
+      retry()
+    }, { rootMargin: '400px 0px' })
+    const leave = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) return
+      near = false
+      waiting.delete(retry)
+      setMounted(false)
+      free(el)
+    }, { rootMargin: '900px 0px' })
+    enter.observe(el)
+    leave.observe(el)
+    return () => {
+      enter.disconnect()
+      leave.disconnect()
+      waiting.delete(retry)
+      free(el)
+    }
+  }, [ref])
+  return mounted
+}
+
 // Each card draws its scene in its own canvas inside the card, so the scene scrolls with the card.
 // Drawing pauses while the page scrolls or the card is off screen; a paused canvas keeps showing
 // its last frame in place, so nothing jumps or disappears.
@@ -579,17 +651,20 @@ export function ExperimentStage({ name, className = 'exp-stage' }) {
   const ref = useRef()
   const small = useIsSmall()
   const frameloop = useFrameloop(ref)
+  const mounted = useNearScreen(ref)
   if (!Scene) return null
   return (
     <div ref={ref} className={className}>
-      <Canvas
-        frameloop={frameloop}
-        dpr={small ? 1 : [1, 1.25]}
-        gl={{ alpha: true, antialias: !small, powerPreference: 'high-performance' }}
-        style={{ pointerEvents: 'none' }}
-      >
-        <Scene />
-      </Canvas>
+      {mounted && (
+        <Canvas
+          frameloop={frameloop}
+          dpr={small ? 1 : [1, 1.25]}
+          gl={{ alpha: true, antialias: !small, powerPreference: small ? 'default' : 'high-performance' }}
+          style={{ pointerEvents: 'none' }}
+        >
+          <Scene />
+        </Canvas>
+      )}
     </div>
   )
 }

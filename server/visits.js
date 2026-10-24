@@ -8,6 +8,8 @@
 import { json } from './http.js'
 
 const BOT = /bot|crawl|spider|slurp|headless|lighthouse|preview|facebookexternalhit|embedly|vercel/i
+// The site's pages, for the all-time "top pages" list (each has a p:<path> counter).
+const PAGES = ['/', '/experiments', '/coding', '/certifications', '/analytics', '/garage']
 const DAY_TTL = 70 * 86400
 const HOUR_TTL = 3 * 86400
 
@@ -80,13 +82,14 @@ async function stats(db, range) {
   const p = hourly ? 'h' : 'd'
   const views = (list) => ['MGET', ...list.map((b) => `v:${p}:${b.id}`)]
   const uniq = (list) => ['PFCOUNT', ...list.map((b) => `u:${p}:${b.id}`)]
-  const [curViews, prevViews, curUniq, prevUniq, allViews, allUniq, ...perBucket] = await run(db, [
+  const [curViews, prevViews, curUniq, prevUniq, allViews, allUniq, pageViews, ...perBucket] = await run(db, [
     views(current),
     views(previous),
     uniq(current),
     uniq(previous),
     ['MGET', 'v:all'],
     ['PFCOUNT', 'u:all'],
+    ['MGET', ...PAGES.map((path) => `p:${path}`)],
     ...current.map((b) => ['PFCOUNT', `u:${p}:${b.id}`]),
   ])
   const sum = (a) => a.reduce((s, n) => s + Number(n || 0), 0)
@@ -101,6 +104,7 @@ async function stats(db, range) {
     prevVisitors: prevUniq,
     allViews: Number(allViews[0] || 0),
     allVisitors: allUniq,
+    pages: PAGES.map((path, i) => ({ path, views: Number(pageViews[i] || 0) })).sort((a, b) => b.views - a.views),
   }
 }
 
