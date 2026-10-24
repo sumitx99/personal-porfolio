@@ -186,7 +186,6 @@ function Footer() {
         <span>
           © {new Date().getFullYear()} {profile.name}
         </span>
-        <span className="muted">Built with React &amp; Three.js</span>
       </div>
     </footer>
   )

@@ -62,6 +62,62 @@ export function updateHose(hose, from, side, z) {
   hose.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.017, 7)
 }
 
+// Air hose hanging from the overhead gantry down to the gun, with a little sag in the middle.
+export function updateHangingHose(hose, from, anchor) {
+  const mid = new THREE.Vector3().lerpVectors(from, anchor, 0.5)
+  mid.y -= 0.35
+  mid.x += (from.x - anchor.x) * 0.2
+  const pts = [from.clone(), new THREE.Vector3(from.x, from.y + 0.25, from.z), mid, new THREE.Vector3(anchor.x, anchor.y - 0.35, anchor.z), anchor.clone()]
+  hose.geometry.dispose()
+  hose.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.017, 7)
+}
+
+// Overhead gantry over the pit box: a rail down each side of the car carrying the wheel-gun air
+// lines, with a reel at each corner. `anchors` are the reel positions (local, metres).
+export function makeGantry(anchors, trim, height) {
+  const g = new THREE.Group()
+  const steel = new THREE.MeshStandardMaterial({ color: '#3a3d44', metalness: 0.8, roughness: 0.35 })
+  const trimMat = new THREE.MeshStandardMaterial({ color: trim, roughness: 0.45, metalness: 0.3 })
+  const zs = anchors.map((a) => a.z)
+  const z0 = Math.min(...zs) - 1.2
+  const z1 = Math.max(...zs) + 1.2
+  for (const side of [-1, 1]) {
+    const x = anchors.find((a) => Math.sign(a.x) === side)?.x ?? side * 1.6
+    g.add(mesh(new THREE.BoxGeometry(0.14, 0.18, z1 - z0), steel, { position: { x, y: height + 0.12, z: (z0 + z1) / 2 } }))
+    g.add(mesh(new THREE.BoxGeometry(0.16, 0.04, z1 - z0), trimMat, { position: { x, y: height + 0.02, z: (z0 + z1) / 2 } }))
+    // hangers up into the garage gantry
+    for (const z of [z0 + 0.2, z1 - 0.2]) g.add(mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.9, 8), steel, { position: { x, y: height + 0.65, z } }))
+  }
+  for (const z of [z0 + 0.2, z1 - 0.2]) {
+    const xs = anchors.map((a) => a.x)
+    const w = Math.max(...xs) - Math.min(...xs)
+    g.add(mesh(new THREE.BoxGeometry(w, 0.12, 0.12), steel, { position: { x: 0, y: height + 0.12, z } }))
+  }
+  anchors.forEach((a) => {
+    const reel = new THREE.Group()
+    reel.add(mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.12, 20), mat.gunmetal, { rotation: [0, 0, Math.PI / 2] }))
+    reel.add(mesh(new THREE.TorusGeometry(0.12, 0.02, 8, 20), mat.hose, { rotation: [0, Math.PI / 2, 0] }))
+    reel.position.set(a.x, height - 0.1, a.z)
+    g.add(reel)
+  })
+  return g
+}
+
+// A wheel gun parked on its air line, hanging at chest height when nobody holds it.
+export function makeParkedGun(anchor) {
+  const g = new THREE.Group()
+  const gun = makeWheelGun()
+  gun.rotation.set(Math.PI / 2, 0, 0)
+  gun.position.set(anchor.x, 1.25, anchor.z)
+  g.add(gun)
+  const hose = makeHose()
+  const top = anchor.clone()
+  const end = new THREE.Vector3(anchor.x, 1.25 + 0.2, anchor.z)
+  hose.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([end, new THREE.Vector3(anchor.x + 0.05, (end.y + top.y) / 2, anchor.z), top]), 16, 0.017, 7)
+  g.add(hose)
+  return g
+}
+
 // F1 lifting jack: a lever on two wheels. Local +Z points at the car; the pivot is the axle.
 // Pushing the handle down tips the cradle up under the nose or gearbox.
 export function makeJack(color, reach) {
@@ -166,7 +222,7 @@ export function makeBlanketTyre(radius, width, color) {
 
 // Fire-suit details stitched onto the rig: gloves, boots, reflective bands, chest panel, knee pads,
 // helmet stripe and radio mic. Bone scales vary, so each piece is sized in metres.
-export function dressCrew(bones, trim, role) {
+export function dressCrew(bones, trim, role, suit = '#f4f4f4') {
   const ws = new THREE.Vector3()
   const attach = (boneName, obj, offset = [0, 0, 0]) => {
     const b = bones[boneName]
@@ -178,9 +234,9 @@ export function dressCrew(bones, trim, role) {
   }
   const trimMat = new THREE.MeshStandardMaterial({ color: trim, roughness: 0.45, metalness: 0.2 })
 
-  // helmet: white shell, team stripe, dark visor, radio mic
+  // helmet in the team's colour with a contrasting stripe, dark visor, radio mic
   const helmet = new THREE.Group()
-  helmet.add(mesh(new THREE.SphereGeometry(0.13, 28, 20), new THREE.MeshPhysicalMaterial({ color: '#f4f4f4', clearcoat: 1, roughness: 0.18 })))
+  helmet.add(mesh(new THREE.SphereGeometry(0.13, 28, 20), new THREE.MeshPhysicalMaterial({ color: suit, clearcoat: 1, roughness: 0.18 })))
   helmet.add(mesh(new THREE.TorusGeometry(0.131, 0.012, 8, 40, Math.PI), trimMat, { rotation: [0, Math.PI / 2, 0] }))
   helmet.add(mesh(new THREE.SphereGeometry(0.132, 24, 12, -0.9, 1.8, 1.25, 0.55), new THREE.MeshPhysicalMaterial({ color: '#0b0c10', metalness: 0.6, roughness: 0.06, clearcoat: 1 })))
   helmet.add(mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.12, 6), mat.black, { position: { x: 0.09, y: -0.08, z: 0.06 }, rotation: [0.9, 0, 0.3] }))
@@ -192,6 +248,11 @@ export function dressCrew(bones, trim, role) {
     attach(`${s}ForeArm`, mesh(new THREE.TorusGeometry(0.052, 0.012, 8, 24), mat.reflective, { rotation: [Math.PI / 2, 0, 0] }), [0, 0.14, 0])
     attach(`${s}Leg`, mesh(new THREE.TorusGeometry(0.068, 0.013, 8, 24), mat.reflective, { rotation: [Math.PI / 2, 0, 0] }), [0, 0.2, 0])
     attach(`${s}Arm`, mesh(new THREE.TorusGeometry(0.07, 0.016, 8, 24), trimMat, { rotation: [Math.PI / 2, 0, 0] }), [0, 0.06, 0])
+    // two-tone suit: a team-colour stripe down the outside of each leg and arm
+    const out = s === 'Left' ? 1 : -1
+    attach(`${s}UpLeg`, mesh(new THREE.BoxGeometry(0.03, 0.4, 0.05), trimMat), [out * 0.085, 0.2, 0])
+    attach(`${s}Leg`, mesh(new THREE.BoxGeometry(0.026, 0.36, 0.045), trimMat), [out * 0.07, 0.2, 0])
+    attach(`${s}ForeArm`, mesh(new THREE.BoxGeometry(0.022, 0.2, 0.03), trimMat), [out * 0.05, 0.12, 0])
     if (role === 'gunner') attach(`${s}Leg`, mesh(new THREE.BoxGeometry(0.13, 0.1, 0.06), mat.black), [0, 0.02, 0.06])
   }
   // chest panel with a lime team mark, and a belt

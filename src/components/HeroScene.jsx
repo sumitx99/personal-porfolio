@@ -189,11 +189,11 @@ function Scene({ small }) {
         <group scale={scale} position={[0, small ? 2.1 : 0, 0]}>
           <Core />
           <Rings />
-          <NeuralShell count={small ? 70 : 140} radius={3.3} />
+          <NeuralShell count={small ? 40 : 140} radius={3.3} />
           <Satellites small={small} />
         </group>
       </Rig>
-      <Sparkles count={small ? 40 : 90} scale={[14, 9, 6]} size={2} speed={0.3} color={ACCENT} opacity={0.5} />
+      <Sparkles count={small ? 24 : 90} scale={[14, 9, 6]} size={2} speed={0.3} color={ACCENT} opacity={0.5} />
     </>
   )
 }
@@ -206,7 +206,7 @@ export default function HeroScene({ small }) {
       ref={ref}
       frameloop={frameloop}
       camera={{ position: [0, 0, 8], fov: 45 }}
-      dpr={[1, small ? 1.25 : 1.5]}
+      dpr={small ? 1 : [1, 1.5]}
       gl={{ antialias: !small, powerPreference: 'high-performance', alpha: true }}
     >
       <Scene small={small} />

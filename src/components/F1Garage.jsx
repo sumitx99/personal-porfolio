@@ -5,156 +5,13 @@ import * as THREE from 'three'
 import { COMPOUNDS, PIT_TIMELINE as T } from '../f1'
 import PitCrew from './PitCrew'
 import PitLane from './PitLane'
+import { splitWheels } from './carRig'
 import { TouchScroll, useFrameloop } from '../hooks'
 
-// Road-wheel parts; steering wheels are named "…_steeringwheel" / "…_sw" and must stay in the cockpit.
-const WHEEL_PART = /(sidewall|tread|tyre|tire|rim|wheel|discs|hub_nut)/i
-const NOT_WHEEL = /(steer|_sw\b|sw_)/i
 const PAINT_PART = /paint/i
 
 const ease = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x))
 const span = (t, a, b) => ease((t - a) / (b - a))
-
-// Copies an attribute into plain floats; the compressed models store quantized (int16) data.
-function toFloat(attr) {
-  const out = new Float32Array(attr.count * attr.itemSize)
-  for (let i = 0; i < attr.count; i++) {
-    out[i * attr.itemSize] = attr.getX(i)
-    if (attr.itemSize > 1) out[i * attr.itemSize + 1] = attr.getY(i)
-    if (attr.itemSize > 2) out[i * attr.itemSize + 2] = attr.getZ(i)
-    if (attr.itemSize > 3) out[i * attr.itemSize + 3] = attr.getW(i)
-  }
-  return new THREE.BufferAttribute(out, attr.itemSize)
-}
-
-// Each car ships its four wheels merged into one mesh per material (tread, sidewall, hub, discs).
-// Split those by quadrant so every wheel can be taken off on its own.
-function splitWheels(scene) {
-  scene.updateMatrixWorld(true)
-  // Bake into the scene's parent space, so the car's own scale is included.
-  const toRoot = new THREE.Matrix4()
-  const extras = []
-  const parts = []
-  scene.traverse((o) => {
-    if (o.isMesh && WHEEL_PART.test(o.material?.name || '') && !NOT_WHEEL.test(o.material?.name || '')) parts.push(o)
-  })
-
-  const baked = parts.map((m) => {
-    const g = new THREE.BufferGeometry()
-    for (const name of ['position', 'normal', 'uv']) {
-      const a = m.geometry.getAttribute(name)
-      if (a) g.setAttribute(name, toFloat(a))
-    }
-    if (m.geometry.index) g.setIndex(new THREE.BufferAttribute(Uint32Array.from(m.geometry.index.array), 1))
-    g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(toRoot, m.matrixWorld))
-    m.visible = false
-    return { material: m.material, geo: g }
-  })
-
-  const all = new THREE.Box3()
-  baked.forEach(({ geo }) => {
-    geo.computeBoundingBox()
-    all.union(geo.boundingBox)
-  })
-  const midZ = (all.min.z + all.max.z) / 2
-
-  const quads = [0, 1, 2, 3].map(() => ({ meshes: [], box: new THREE.Box3() }))
-  const v = new THREE.Vector3()
-  baked.forEach(({ material, geo }) => {
-    const pos = geo.getAttribute('position')
-    const idx = geo.index ? geo.index.array : Uint32Array.from({ length: pos.count }, (_, i) => i)
-    const lists = [[], [], [], []]
-    for (let t = 0; t < idx.length; t += 3) {
-      const a = idx[t]
-      const b = idx[t + 1]
-      const c = idx[t + 2]
-      const cx = (pos.getX(a) + pos.getX(b) + pos.getX(c)) / 3
-      const cz = (pos.getZ(a) + pos.getZ(b) + pos.getZ(c)) / 3
-      const q = (cz > midZ ? 0 : 2) + (cx > 0 ? 0 : 1)
-      lists[q].push(a, b, c)
-      for (const k of [a, b, c]) quads[q].box.expandByPoint(v.fromBufferAttribute(pos, k))
-    }
-    lists.forEach((list, q) => {
-      if (!list.length) return
-      const g = new THREE.BufferGeometry()
-      for (const name of Object.keys(geo.attributes)) g.setAttribute(name, geo.getAttribute(name))
-      g.setIndex(list)
-      const mesh = new THREE.Mesh(g, material)
-      mesh.castShadow = true
-      quads[q].meshes.push(mesh)
-    })
-  })
-
-  // Some tyre parts end up on generically named materials after compression, so also take any
-  // triangle that sits entirely inside a wheel's tyre cylinder, whatever its material.
-  const wheelsZone = quads.map((q) => {
-    if (!q.meshes.length) return null
-    const c = q.box.getCenter(new THREE.Vector3())
-    return { c, r: (q.box.max.y - q.box.min.y) / 2, x0: q.box.min.x - 0.02, x1: q.box.max.x + 0.02, box: q.box.clone().expandByScalar(0.03) }
-  })
-  const inside = (zone, x, y, z) =>
-    zone && x >= zone.x0 && x <= zone.x1 && Math.hypot(y - zone.c.y, z - zone.c.z) <= zone.r * 1.02
-  const others = []
-  scene.traverse((o) => {
-    if (o.isMesh && o.visible && !parts.includes(o)) others.push(o)
-  })
-  others.forEach((m) => {
-    const wb = new THREE.Box3().setFromObject(m)
-    if (!wheelsZone.some((z) => z && z.box.intersectsBox(wb))) return
-    const g = new THREE.BufferGeometry()
-    for (const name of ['position', 'normal', 'uv']) {
-      const a = m.geometry.getAttribute(name)
-      if (a) g.setAttribute(name, toFloat(a))
-    }
-    const pos = g.getAttribute('position')
-    const idx = m.geometry.index ? Uint32Array.from(m.geometry.index.array) : Uint32Array.from({ length: pos.count }, (_, i) => i)
-    g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(toRoot, m.matrixWorld))
-    const caught = [[], [], [], []]
-    const rest = []
-    for (let t = 0; t < idx.length; t += 3) {
-      const tri = [idx[t], idx[t + 1], idx[t + 2]]
-      const q = wheelsZone.findIndex((z) => tri.every((k) => inside(z, pos.getX(k), pos.getY(k), pos.getZ(k))))
-      if (q >= 0) caught[q].push(...tri)
-      else rest.push(...tri)
-    }
-    if (!caught.some((l) => l.length)) return
-    const sub = (list) => {
-      const out = new THREE.BufferGeometry()
-      for (const name of Object.keys(g.attributes)) out.setAttribute(name, g.getAttribute(name))
-      out.setIndex(list)
-      const mesh = new THREE.Mesh(out, m.material)
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-      return mesh
-    }
-    caught.forEach((list, q) => list.length && quads[q].meshes.push(sub(list)))
-    if (rest.length) extras.push(sub(rest))
-    m.visible = false
-  })
-
-  const wheels = quads
-    .filter((q) => q.meshes.length)
-    .map((q) => {
-      const center = q.box.getCenter(new THREE.Vector3())
-      const size = q.box.getSize(new THREE.Vector3())
-      const side = Math.sign(center.x) || 1
-      const pivot = new THREE.Group()
-      pivot.position.copy(center)
-      q.meshes.forEach((m) => {
-        m.position.copy(center).multiplyScalar(-1)
-        pivot.add(m)
-      })
-      return {
-        pivot,
-        base: center.clone(),
-        radius: size.y / 2,
-        outer: (side > 0 ? q.box.max.x : q.box.min.x) - center.x,
-        side,
-        front: center.z > midZ,
-      }
-    })
-  return { wheels, extras }
-}
 
 // Coloured band on the outer sidewall, like Pirelli's compound markings.
 function CompoundBand({ wheel, compound }) {
@@ -167,7 +24,25 @@ function CompoundBand({ wheel, compound }) {
   )
 }
 
-function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap }) {
+// Drive-through stops: the car brakes in from the pit lane at the 80 km/h limit, the crew works, and
+// it accelerates away. Times are seconds relative to pitStart (negative while it is still arriving).
+export const APPROACH = 2.6 // seconds of arrival before the crew timeline starts
+const LIMIT = 22 // m/s
+const DECEL = 8
+const LAUNCH = 12
+const RELEASE = T.jackDown + 0.15
+const EXIT_TIME = 3.4
+// distance still to go before the car stops in the box, s seconds before it does
+function toBox(s) {
+  const tBrake = LIMIT / DECEL
+  return s <= tBrake ? 0.5 * DECEL * s * s : 0.5 * DECEL * tBrake * tBrake + LIMIT * (s - tBrake)
+}
+function awayFromBox(u) {
+  const tLaunch = LIMIT / LAUNCH
+  return u <= tLaunch ? 0.5 * LAUNCH * u * u : 0.5 * LAUNCH * tLaunch * tLaunch + LIMIT * (u - tLaunch)
+}
+
+function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap, driveThrough }) {
   const { scene: original } = useGLTF(team.file)
 
   // Clone per mount and split the wheels once; also centre the car in its pit box.
@@ -204,6 +79,7 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap }) {
   }, [paint, rig])
 
   const body = useRef()
+  const drive = useRef()
   const swapped = useRef(false)
   const done = useRef(true)
 
@@ -212,9 +88,9 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap }) {
     done.current = pitStart == null
   }, [pitStart])
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const t = pitStart == null ? Infinity : (state.clock.elapsedTime - pitStart)
-    const inPit = t < T.leave
+    const inPit = t < (driveThrough ? RELEASE + EXIT_TIME : T.leave)
     const lift = inPit ? span(t, T.arrive, T.jackUp) * (1 - span(t, T.wheelsOn, T.jackDown)) : 0
     const out = inPit ? span(t, T.jackUp, T.wheelsOff) * (1 - span(t, T.wheelsOff, T.wheelsOn)) : 0
 
@@ -227,8 +103,25 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap }) {
       onPitDone()
     }
 
+    // roll in from the pit lane and away again; wheels turn with the road speed
+    let z = 0
+    let speed = 0
+    if (driveThrough && inPit) {
+      if (t < T.arrive) {
+        const s = T.arrive - t
+        z = -toBox(s)
+        speed = Math.min(LIMIT, DECEL * s)
+      } else if (t > RELEASE) {
+        const u = t - RELEASE
+        z = awayFromBox(u)
+        speed = Math.min(LIMIT, LAUNCH * u)
+      }
+    }
+    drive.current.position.z = z
+    const roll = (speed * Math.min(delta, 0.1)) / (rig.wheels[0]?.radius || 0.36)
     body.current.position.y = lift * 0.12
     rig.wheels.forEach((w) => {
+      w.pivot.rotation.x += roll
       // The carrier pulls the old wheel out and away, then the new one goes on.
       w.pivot.position.set(w.base.x + w.side * out * 0.75, w.base.y + lift * 0.12 - out * 0.05, w.base.z + (w.front ? 1 : -1) * out * 0.6)
     })
@@ -236,17 +129,19 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap }) {
 
   return (
     <group position={rig.offset}>
-      <group ref={body}>
-        <primitive object={rig.scene} />
-        {rig.extras.map((m, i) => (
-          <primitive key={i} object={m} />
+      <group ref={drive}>
+        <group ref={body}>
+          <primitive object={rig.scene} />
+          {rig.extras.map((m, i) => (
+            <primitive key={i} object={m} />
+          ))}
+        </group>
+        {rig.wheels.map((w, i) => (
+          <primitive key={i} object={w.pivot}>
+            <CompoundBand wheel={w} compound={compound} />
+          </primitive>
         ))}
       </group>
-      {rig.wheels.map((w, i) => (
-        <primitive key={i} object={w.pivot}>
-          <CompoundBand wheel={w} compound={compound} />
-        </primitive>
-      ))}
       <PitCrew rig={rig} suit={team.crew} trim={team.color} pitStart={pitStart} />
     </group>
   )
@@ -321,19 +216,41 @@ function CameraBounds() {
   return null
 }
 
+// Pit-stop camera, like a broadcast shot from the gantry: high over the box, looking back up the
+// pit lane so the car is seen arriving, stopping and leaving.
+function PitCam({ active, small }) {
+  const { camera } = useThree()
+  const target = useMemo(() => new THREE.Vector3(0, 0, -2.5), [])
+  const goal = useMemo(() => new THREE.Vector3(), [])
+  useFrame((_, dt) => {
+    if (!active) return
+    goal.set(small ? 9 : 7.5, small ? 13 : 10, small ? 11 : 8.5)
+    camera.position.lerp(goal, 1 - Math.exp(-Math.min(dt, 0.1) * 3))
+    camera.lookAt(target)
+  })
+  return null
+}
+
 // Exposes the render clock so the page can stamp pit stops with the same time base.
 function ClockBridge({ clockRef }) {
   useFrame((state) => {
     if (clockRef) clockRef.current = state.clock
   })
+  // forget this scene's clock when it goes, so a remounted scene isn't stamped with stale times
+  useEffect(
+    () => () => {
+      if (clockRef) clockRef.current = null
+    },
+    [clockRef],
+  )
   return null
 }
 
-export default function F1Garage({ team, compound, paint, pitStart, onPitDone, onWheelSwap, autoRotate, clockRef, small }) {
+export default function F1Garage({ team, compound, paint, pitStart, onPitDone, onWheelSwap, autoRotate, clockRef, small, driveThrough = false, pitCam = false }) {
   const canvas = useRef()
   const frameloop = useFrameloop(canvas)
   return (
-    <Canvas ref={canvas} frameloop={frameloop} shadows dpr={[1, small ? 1.25 : 1.5]} camera={{ position: [5.2, 1.9, 4.2], fov: 34 }} gl={{ antialias: true }}>
+    <Canvas ref={canvas} frameloop={frameloop} shadows={!small} dpr={small ? 1 : [1, 1.5]} camera={{ position: [5.2, 1.9, 4.2], fov: 34 }} gl={{ antialias: !small }}>
       <TouchScroll />
       <ClockBridge clockRef={clockRef} />
       <FitCamera />
@@ -341,13 +258,13 @@ export default function F1Garage({ team, compound, paint, pitStart, onPitDone, o
       <color attach="background" args={['#06080c']} />
       <fog attach="fog" args={['#06080c', 20, 60]} />
       <hemisphereLight args={['#cfd8ff', '#16171b', 0.55]} />
-      <directionalLight position={[5, 9, 6]} intensity={2.4} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004}>
+      <directionalLight position={[5, 9, 6]} intensity={2.4} castShadow={!small} shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004}>
         <orthographicCamera attach="shadow-camera" args={[-6, 6, 6, -6, 0.1, 30]} />
       </directionalLight>
       <spotLight position={[0, 9, 0]} angle={0.5} penumbra={0.9} intensity={120} />
       {/* Night-race lighting for reflections: the gantry LEDs overhead, the bright garage mouth on one
           side and the floodlights over the pit wall on the other. */}
-      <Environment resolution={512}>
+      <Environment resolution={small ? 128 : 512}>
         <Lightformer form="rect" intensity={4} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[8, 2.5, 1]} />
         <Lightformer form="rect" intensity={2.4} position={[-7, 2.2, 0]} rotation-y={Math.PI / 2} scale={[12, 4, 1]} />
         <Lightformer form="rect" intensity={1.4} color="#dfe6ff" position={[12, 9, 0]} rotation-y={-Math.PI / 2} scale={[30, 2, 1]} />
@@ -359,11 +276,13 @@ export default function F1Garage({ team, compound, paint, pitStart, onPitDone, o
         <PitLane team={team} wet={compound === 'wet'} pitStart={pitStart} small={small} />
       </Suspense>
       <Suspense fallback={<Loader />}>
-        <Car key={team.id} team={team} compound={compound} paint={paint} pitStart={pitStart} onPitDone={onPitDone} onWheelSwap={onWheelSwap} />
+        <Car key={team.id} team={team} compound={compound} paint={paint} pitStart={pitStart} onPitDone={onPitDone} onWheelSwap={onWheelSwap} driveThrough={driveThrough} />
       </Suspense>
       {compound === 'wet' && <Rain />}
-      <ContactShadows position={[0, 0.004, 0]} opacity={0.75} scale={9} blur={2.2} far={2} resolution={1024} />
+      {!small && <ContactShadows position={[0, 0.004, 0]} opacity={0.75} scale={9} blur={2.2} far={2} resolution={1024} />}
+      <PitCam active={pitCam} small={small} />
       <OrbitControls
+        enabled={!pitCam}
         enablePan={false}
         minDistance={4.2}
         maxDistance={13}

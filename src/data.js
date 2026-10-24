@@ -213,6 +213,17 @@ export const certifications = [
     url: 'https://courses.cu.skillsnetwork.site/certificates/af3743ed2c054f6b836182217389055e',
   },
   {
+    title: 'Achievers Award',
+    issuer: 'Chandigarh University',
+    date: 'Apr 2025',
+    note: 'Recognized for academic and extracurricular efforts',
+    category: 'Recognition',
+    tags: ['Academic achievement', 'Extracurricular excellence'],
+    image: '/certs/achievers-award.jpg',
+    photo: true,
+    url: 'https://lnkd.in/p/gW9BE3ja',
+  },
+  {
     title: 'Advanced Data Analysis with Generative AI',
     issuer: 'Microsoft · Coursera',
     date: 'Apr 2025',
@@ -268,14 +279,6 @@ export const certifications = [
     tags: ['AWS', 'Cloud'],
     image: '/certs/aws.jpg',
     url: 'https://www.credly.com/go/qclm8xyC',
-  },
-  {
-    title: 'Rajasthan Hackathon',
-    issuer: 'iStart Rajasthan',
-    date: 'Mar 2023',
-    category: 'Recognition',
-    tags: ['Hackathon'],
-    url: 'https://drive.google.com/open?id=1CQv3N8uu3NnzRj5VzyL3ZVUc-tJTu9E5',
   },
   {
     title: 'BIZINNOVATHON ’24 — 1st Runner-Up',
