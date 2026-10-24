@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import * as THREE from 'three'
 import { PIT_TIMELINE as T } from '../f1'
-import { dressCrew, makeBlanketTyre, makeHose, makeJack, makeWheelGun, updateHose } from './PitGear'
+import { dressCrew, makeBlanketTyre, makeGantry, makeHose, makeJack, makeParkedGun, makeWheelGun, updateHangingHose } from './PitGear'
 
 // Rigged, animated human (Mixamo "Vanguard" from the three.js examples), dressed as a pit mechanic.
 const MODEL = '/crew/mechanic.glb'
@@ -17,7 +17,12 @@ const POSES = {
   gunner: { LeftUpLeg: [-1.45, 0, 0], LeftLeg: [1.5, 0, 0], RightUpLeg: [-0.2, 0, 0], RightLeg: [2.1, 0, 0], Spine: [0.35, 0, 0], RightArm: [0, 0, 0.9], RightForeArm: [0, -1.1, 0], LeftArm: [0, 0, -0.9], LeftForeArm: [0, 1.1, 0], drop: 0.48 },
   carrier: { LeftUpLeg: [-0.6, 0, 0], LeftLeg: [0.9, 0, 0], RightUpLeg: [-0.6, 0, 0], RightLeg: [0.9, 0, 0], Spine: [0.45, 0, 0], RightArm: [0, 0, 1.0], RightForeArm: [0, -0.6, 0], LeftArm: [0, 0, -1.0], LeftForeArm: [0, 0.6, 0], drop: 0.2 },
   jack: { Spine: [0.55, 0, 0], Spine1: [0.2, 0, 0], RightArm: [0, 0, 1.1], LeftArm: [0, 0, -1.1], RightForeArm: [0, -0.4, 0], LeftForeArm: [0, 0.4, 0], LeftUpLeg: [-0.35, 0, 0], LeftLeg: [0.5, 0, 0], drop: 0.08 },
+  // leaning on the sidepod with both hands to hold the car steady while the wheels come off
+  stabiliser: { Spine: [0.7, 0, 0], Spine1: [0.25, 0, 0], RightArm: [0, 0, 1.25], LeftArm: [0, 0, -1.25], RightForeArm: [0, -0.2, 0], LeftForeArm: [0, 0.2, 0], LeftUpLeg: [-0.5, 0, 0], LeftLeg: [0.7, 0, 0], RightUpLeg: [-0.2, 0, 0], RightLeg: [0.3, 0, 0], drop: 0.12 },
 }
+// tyre-off and tyre-on men crouch like the old carrier pose
+POSES.off = POSES.carrier
+POSES.on = POSES.carrier
 
 function makeMember(gltf, suit, trim, role) {
   const root = cloneSkinned(gltf.scene)
@@ -37,7 +42,7 @@ function makeMember(gltf, suit, trim, role) {
   })
   root.updateMatrixWorld(true)
 
-  dressCrew(bones, trim, role)
+  dressCrew(bones, trim, role, suit)
 
   // Gunners carry a pneumatic wheel gun in the right hand.
   let gun = null
@@ -60,27 +65,38 @@ function makeMember(gltf, suit, trim, role) {
   return { root, bones, mixer, run, idle, role, gun, pose: POSES[role] }
 }
 
-// Work spots around the car; each crew member sprints in from `home` and back out.
+// Work spots around the car, like a real stop: three per wheel (gun, tyre off, tyre on), front and
+// rear jack, and a stabiliser either side of the cockpit. Everyone sprints in from `home` and back out.
 function layout(rig) {
   const spots = []
   rig.wheels.forEach((w) => {
     const ox = w.base.x + w.outer
     const dz = w.front ? 1 : -1
     spots.push({ role: 'gunner', work: new THREE.Vector3(ox + w.side * 0.62, 0, w.base.z), face: -w.side, axis: 'x', wheel: w })
-    spots.push({ role: 'carrier', work: new THREE.Vector3(ox + w.side * 0.95, 0, w.base.z + dz * 0.95), face: -w.side, axis: 'x' })
+    // the old wheel is pulled outward and away from the axle line; the new one waits on the other side
+    spots.push({ role: 'off', work: new THREE.Vector3(ox + w.side * 0.95, 0, w.base.z + dz * 0.95), face: -w.side, axis: 'x', wheel: w })
+    spots.push({ role: 'on', work: new THREE.Vector3(ox + w.side * 1.0, 0, w.base.z - dz * 0.95), face: -w.side, axis: 'x', wheel: w })
   })
   spots.push({ role: 'jack', work: new THREE.Vector3(0, 0, rig.maxZ + 0.85), face: -1, axis: 'z', reach: 1.18 })
   spots.push({ role: 'jack', work: new THREE.Vector3(0, 0, rig.minZ - 0.85), face: 1, axis: 'z', reach: 0.88 })
+  // stabilisers at the cockpit, between the front and rear tyre crews
+  const front = rig.wheels.find((w) => w.front)
+  const rear = rig.wheels.find((w) => !w.front)
+  const midZ = front && rear ? (front.base.z * 0.4 + rear.base.z * 0.6) : (rig.minZ + rig.maxZ) / 2
+  const halfW = Math.max(...rig.wheels.map((w) => Math.abs(w.base.x))) * 0.8
+  for (const side of [-1, 1]) spots.push({ role: 'stabiliser', work: new THREE.Vector3(side * (halfW + 0.45), 0, midZ), face: -side, axis: 'x' })
   spots.forEach((s) => {
     s.home = s.work.clone()
     if (s.axis === 'x') s.home.x += -s.face * 3.4
-    else s.home.z += -s.face * 3.4
+    // jack men wait beside the box (garage side), clear of the car driving in and out
+    else s.home.add(new THREE.Vector3(-3.2, 0, -s.face * 1.2))
   })
   return spots
 }
 
 // The Mixamo character faces -Z, so turn it half a revolution to face the direction we want.
 const yawTo = (dx, dz) => Math.atan2(dx, dz) + Math.PI
+const GANTRY_HEIGHT = 4.1 // metres; the overhead rail that carries the wheel-gun air lines
 
 export default function PitCrew({ rig, suit, trim, pitStart }) {
   const gltf = useGLTF(MODEL)
@@ -91,16 +107,21 @@ export default function PitCrew({ rig, suit, trim, pitStart }) {
   // Equipment that isn't held: air hoses, the two jacks and a blanket-wrapped fresh tyre per corner.
   const gear = useMemo(() => {
     const hoses = spots.map((s) => (s.role === 'gunner' ? makeHose() : null))
+    // each gunner's air line comes down from a reel on the overhead gantry, right above the wheel
+    const anchors = spots.map((s) => (s.role === 'gunner' ? new THREE.Vector3(s.work.x + Math.sign(s.work.x) * 0.15, GANTRY_HEIGHT, s.work.z) : null))
+    const gantry = makeGantry(anchors.filter(Boolean), trim, GANTRY_HEIGHT)
+    const parked = anchors.map((a) => (a ? makeParkedGun(a) : null))
     const jacks = spots.map((s) => (s.role === 'jack' ? makeJack(trim, s.reach) : null))
+    // the tyre-on man carries the new, blanket-wrapped tyre in and offers it up to the hub
     const tyres = rig.wheels.map((w) => {
       const tyre = makeBlanketTyre(w.radius, w.front ? 0.37 : 0.44, trim)
-      const dz = w.front ? 1 : -1
-      const work = new THREE.Vector3(w.base.x + w.outer + w.side * 0.55, w.radius * 1.04, w.base.z - dz * 0.9)
+      const on = spots.find((s) => s.role === 'on' && s.wheel === w)
+      const work = new THREE.Vector3(on.work.x - w.side * 0.45, w.radius * 1.04, on.work.z)
       const home = work.clone().setX(work.x + w.side * 3.4)
       const hub = new THREE.Vector3(w.base.x + w.side * 0.75, w.base.y, w.base.z)
       return { tyre, work, home, hub, side: w.side }
     })
-    return { hoses, jacks, tyres }
+    return { hoses, anchors, gantry, parked, jacks, tyres }
   }, [spots, rig, trim])
 
   useEffect(() => () => crew.forEach((m) => m.mixer.stopAllAction()), [crew])
@@ -146,16 +167,18 @@ export default function PitCrew({ rig, suit, trim, pitStart }) {
     const lift = inPit ? span(t, T.arrive, T.jackUp) * (1 - span(t, T.wheelsOn, T.jackDown)) : 0
     const inlet = new THREE.Vector3()
     spots.forEach((s, i) => {
-      // Hose from the gun to the air line at the edge of the box, following the gunner.
+      // Hose from the gun up to its reel on the gantry, following the gunner; when nobody is out,
+      // the gun hangs parked on its line instead.
       const hose = gear.hoses[i]
       if (hose) {
         hose.visible = crew[i].root.visible
+        gear.parked[i].visible = !hose.visible
         if (hose.visible) {
           crew[i].gun.updateWorldMatrix(true, false)
           inlet.copy(crew[i].gun.userData.inlet)
           crew[i].gun.localToWorld(inlet)
           group.current.worldToLocal(inlet)
-          updateHose(hose, inlet, -s.face, s.work.z)
+          updateHangingHose(hose, inlet, gear.anchors[i])
         }
       }
       // Jack rolls in ahead of its operator, then levers the car up in time with the lift.
@@ -185,6 +208,8 @@ export default function PitCrew({ rig, suit, trim, pitStart }) {
         <primitive key={i} object={m.root} />
       ))}
       {gear.hoses.map((h, i) => h && <primitive key={`h${i}`} object={h} />)}
+      {gear.parked.map((g, i) => g && <primitive key={`p${i}`} object={g} />)}
+      <primitive object={gear.gantry} />
       {gear.jacks.map((j, i) => j && <primitive key={`j${i}`} object={j} />)}
       {gear.tyres.map((g, i) => (
         <primitive key={`t${i}`} object={g.tyre} />

@@ -1,10 +1,10 @@
 import { useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Float, PerspectiveCamera, RoundedBox, View } from '@react-three/drei'
+import { Float, PerspectiveCamera, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
+import { useFrameloop, useIsSmall } from '../hooks'
 
-// One fixed, transparent canvas draws every card's scene through drei <View>,
-// so ten live 3D scenes share a single WebGL context.
+// Small looping 3D scenes for the experiment cards, one per project.
 
 const ACCENT = '#d4ff3a'
 const SHELL = '#e9eaee'
@@ -571,27 +571,30 @@ const SCENES = {
   'Drug Review Sentiment': Drug,
 }
 
-// The DOM slot a scene renders into; place it anywhere on the page.
+// Each card draws its scene in its own canvas inside the card, so the scene scrolls with the card.
+// Drawing pauses while the page scrolls or the card is off screen; a paused canvas keeps showing
+// its last frame in place, so nothing jumps or disappears.
 export function ExperimentStage({ name, className = 'exp-stage' }) {
   const Scene = SCENES[name]
+  const ref = useRef()
+  const small = useIsSmall()
+  const frameloop = useFrameloop(ref)
   if (!Scene) return null
   return (
-    <View className={className}>
-      <Scene />
-    </View>
+    <div ref={ref} className={className}>
+      <Canvas
+        frameloop={frameloop}
+        dpr={small ? 1 : [1, 1.25]}
+        gl={{ alpha: true, antialias: !small, powerPreference: 'high-performance' }}
+        style={{ pointerEvents: 'none' }}
+      >
+        <Scene />
+      </Canvas>
+    </div>
   )
 }
 
-// Mount once per page, after the stages.
+// Kept so pages that still mount it don't break; every card now has its own canvas.
 export function SceneCanvas() {
-  return (
-    <Canvas
-      className="scene-canvas"
-      dpr={[1, 1.25]}
-      gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
-      style={{ position: 'fixed', inset: 0, pointerEvents: 'none' }}
-    >
-      <View.Port />
-    </Canvas>
-  )
+  return null
 }

@@ -20,7 +20,7 @@ function Computer({ small }) {
   return (
     <group>
       <hemisphereLight intensity={0.6} groundColor="black" />
-      <spotLight position={[-20, 50, 10]} angle={0.12} penumbra={1} intensity={1.2} castShadow shadow-mapSize={1024} decay={0} />
+      <spotLight position={[-20, 50, 10]} angle={0.12} penumbra={1} intensity={1.2} castShadow={!small} shadow-mapSize={1024} decay={0} />
       <pointLight intensity={1.2} position={[0, 2, 0]} decay={0} color="#d4ff3a" />
       <pointLight intensity={0.8} position={[2, 3, 6]} decay={0} />
       <primitive object={scene} scale={small ? 0.62 : 0.66} position={small ? [0, -1.5, -1.1] : [0, -2.1, -1.1]} rotation={[-0.01, -0.2, -0.1]} />
@@ -33,7 +33,7 @@ export default function DesktopPC({ small }) {
   const ref = useRef()
   const frameloop = useFrameloop(ref)
   return (
-    <Canvas ref={ref} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [20, 3, 5], fov: 25 }}>
+    <Canvas ref={ref} frameloop={frameloop} shadows={!small} dpr={small ? 1 : [1, 1.5]} gl={{ antialias: !small }} camera={{ position: [20, 3, 5], fov: 25 }}>
       <TouchScroll />
       <Suspense fallback={<Loader />}>
         <OrbitControls enableZoom={false} enablePan={false} maxPolarAngle={Math.PI / 2} minPolarAngle={Math.PI / 2} autoRotate autoRotateSpeed={0.8} />

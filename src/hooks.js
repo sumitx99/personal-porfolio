@@ -63,17 +63,24 @@ export function useScrolling() {
 }
 
 // Frameloop for a <Canvas ref={ref}>: renders only while on screen, and pauses during scrolling.
-export function useFrameloop(ref, { pauseOnScroll = true } = {}) {
+// `observe: false` is for canvases fixed to the screen, which are always in view.
+export function useFrameloop(ref, { pauseOnScroll = true, observe = true } = {}) {
   const [visible, setVisible] = useState(true)
+  const [pageVisible, setPageVisible] = useState(() => !document.hidden)
   const isScrolling = useScrolling()
   useEffect(() => {
+    const onVisibility = () => setPageVisible(!document.hidden)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
+  useEffect(() => {
     const el = ref.current
-    if (!el) return
+    if (!el || !observe) return
     const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { rootMargin: '80px' })
     io.observe(el)
     return () => io.disconnect()
-  }, [ref])
-  return visible && !(pauseOnScroll && isScrolling) ? 'always' : 'never'
+  }, [ref, observe])
+  return pageVisible && visible && !(pauseOnScroll && isScrolling) ? 'always' : 'never'
 }
 
 // OrbitControls blocks all touch gestures on its canvas. This lets a vertical swipe scroll the page

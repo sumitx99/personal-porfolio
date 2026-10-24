@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { ContactShadows, Environment, Float, Lightformer } from '@react-three/drei'
 import * as THREE from 'three'
-import { useFrameloop } from '../hooks'
+import { useFrameloop, useIsSmall } from '../hooks'
 
 const ACCENT = '#d4ff3a'
 
@@ -158,14 +158,15 @@ function HoverPad() {
 }
 
 export default function RobotScene({ talking, excited }) {
+  const small = useIsSmall()
   const ref = useRef()
   const frameloop = useFrameloop(ref)
   return (
-    <Canvas ref={ref} frameloop={frameloop} camera={{ position: [0, 0.1, 3.7], fov: 38 }} dpr={[1, 1.5]} gl={{ alpha: true, antialias: true }}>
+    <Canvas ref={ref} frameloop={frameloop} camera={{ position: [0, 0.1, 3.7], fov: 38 }} dpr={small ? 1 : [1, 1.5]} gl={{ alpha: true, antialias: !small }}>
       <ambientLight intensity={0.7} />
       <directionalLight position={[2, 3, 4]} intensity={1.8} />
       {/* Studio reflections built from light panels: no HDR file to download. */}
-      <Environment resolution={128}>
+      <Environment resolution={small ? 64 : 128}>
         <Lightformer intensity={2.2} position={[0, 4, 3]} scale={[6, 1.2, 1]} />
         <Lightformer intensity={1.2} position={[-4, 1, 2]} rotation-y={Math.PI / 2} scale={[4, 3, 1]} />
         <Lightformer intensity={0.5} color={ACCENT} position={[4, -1, 1]} rotation-y={-Math.PI / 2} scale={[3, 2, 1]} />
@@ -177,7 +178,7 @@ export default function RobotScene({ talking, excited }) {
           <Orb talking={talking} happy={excited} />
         </group>
       </Float>
-      <ContactShadows position={[0, -1.25, 0]} opacity={0.7} scale={3.2} blur={2.6} far={2} color="#000000" />
+      {!small && <ContactShadows position={[0, -1.25, 0]} opacity={0.7} scale={3.2} blur={2.6} far={2} color="#000000" />}
       <HoverPad />
     </Canvas>
   )

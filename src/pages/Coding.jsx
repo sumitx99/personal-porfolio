@@ -44,7 +44,7 @@ function CardFace({ data, kind, stats, find, tags }) {
         {rank != null && <span className="ccard-rank">#{fmt(rank)}</span>}
       </header>
       <div className="ccard-avatar">
-        {profile.photo && <img src={profile.photo} alt={profile.name} width="132" height="132" loading="lazy" referrerPolicy="no-referrer" />}
+        <img src="/coding-profile.jpg" alt={profile.name} width="132" height="132" loading="lazy" />
         <span aria-hidden="true">{kind === 'dev' ? '{ }' : '</>'}</span>
       </div>
       <h3>
