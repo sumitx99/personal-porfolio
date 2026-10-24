@@ -21,17 +21,42 @@ function toFloat(attr) {
 
 // Each car ships its four wheels merged into one mesh per material (tread, sidewall, hub, discs).
 // Split those by quadrant so every wheel can be taken off on its own.
+//
+// Working out which triangles belong to which wheel walks every vertex of the car, which is heavy
+// (hundreds of ms per car on a phone). The answer only depends on the model's geometry and pose, so
+// it is worked out once per model and then reused: rebuilding a car (racing again, switching teams
+// back) just wires the cached geometry onto fresh meshes and pivots.
+const recipes = new Map()
+
 export function splitWheels(scene) {
   scene.updateMatrixWorld(true)
+  const meshes = []
+  scene.traverse((o) => {
+    if (o.isMesh) meshes.push(o)
+  })
+  const key = meshes
+    .map((m) => `${m.geometry.uuid}${m.visible ? '' : '-'}@${m.matrixWorld.elements.map((v) => v.toFixed(5)).join(',')}`)
+    .join('|')
+  let recipe = recipes.get(key)
+  if (!recipe) {
+    recipe = buildRecipe(meshes)
+    recipes.set(key, recipe)
+  }
+  return applyRecipe(recipe, meshes)
+}
+
+function buildRecipe(meshes) {
   // Bake into the scene's parent space, so the car's own scale is included.
   const toRoot = new THREE.Matrix4()
+  const hidden = new Set()
   const extras = []
   const parts = []
-  scene.traverse((o) => {
-    if (o.isMesh && WHEEL_PART.test(o.material?.name || '') && !NOT_WHEEL.test(o.material?.name || '')) parts.push(o)
+  meshes.forEach((o, i) => {
+    if (WHEEL_PART.test(o.material?.name || '') && !NOT_WHEEL.test(o.material?.name || '')) parts.push(i)
   })
 
-  const baked = parts.map((m) => {
+  const baked = parts.map((i) => {
+    const m = meshes[i]
     const g = new THREE.BufferGeometry()
     for (const name of ['position', 'normal', 'uv']) {
       const a = m.geometry.getAttribute(name)
@@ -39,8 +64,8 @@ export function splitWheels(scene) {
     }
     if (m.geometry.index) g.setIndex(new THREE.BufferAttribute(Uint32Array.from(m.geometry.index.array), 1))
     g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(toRoot, m.matrixWorld))
-    m.visible = false
-    return { material: m.material, geo: g }
+    hidden.add(i)
+    return { src: i, geo: g }
   })
 
   const all = new THREE.Box3()
@@ -52,7 +77,7 @@ export function splitWheels(scene) {
 
   const quads = [0, 1, 2, 3].map(() => ({ meshes: [], box: new THREE.Box3() }))
   const v = new THREE.Vector3()
-  baked.forEach(({ material, geo }) => {
+  baked.forEach(({ src, geo }) => {
     const pos = geo.getAttribute('position')
     const idx = geo.index ? geo.index.array : Uint32Array.from({ length: pos.count }, (_, i) => i)
     const lists = [[], [], [], []]
@@ -71,9 +96,7 @@ export function splitWheels(scene) {
       const g = new THREE.BufferGeometry()
       for (const name of Object.keys(geo.attributes)) g.setAttribute(name, geo.getAttribute(name))
       g.setIndex(list)
-      const mesh = new THREE.Mesh(g, material)
-      mesh.castShadow = true
-      quads[q].meshes.push(mesh)
+      quads[q].meshes.push({ src, geometry: g, receiveShadow: false })
     })
   })
 
@@ -86,11 +109,8 @@ export function splitWheels(scene) {
   })
   const inside = (zone, x, y, z) =>
     zone && x >= zone.x0 && x <= zone.x1 && Math.hypot(y - zone.c.y, z - zone.c.z) <= zone.r * 1.02
-  const others = []
-  scene.traverse((o) => {
-    if (o.isMesh && o.visible && !parts.includes(o)) others.push(o)
-  })
-  others.forEach((m) => {
+  meshes.forEach((m, i) => {
+    if (!m.visible || hidden.has(i)) return
     const wb = new THREE.Box3().setFromObject(m)
     if (!wheelsZone.some((z) => z && z.box.intersectsBox(wb))) return
     const g = new THREE.BufferGeometry()
@@ -114,37 +134,47 @@ export function splitWheels(scene) {
       const out = new THREE.BufferGeometry()
       for (const name of Object.keys(g.attributes)) out.setAttribute(name, g.getAttribute(name))
       out.setIndex(list)
-      const mesh = new THREE.Mesh(out, m.material)
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-      return mesh
+      return { src: i, geometry: out, receiveShadow: true }
     }
     caught.forEach((list, q) => list.length && quads[q].meshes.push(sub(list)))
     if (rest.length) extras.push(sub(rest))
-    m.visible = false
+    hidden.add(i)
   })
 
-  const wheels = quads
-    .filter((q) => q.meshes.length)
-    .map((q) => {
-      const center = q.box.getCenter(new THREE.Vector3())
-      const size = q.box.getSize(new THREE.Vector3())
-      const side = Math.sign(center.x) || 1
-      const pivot = new THREE.Group()
-      pivot.position.copy(center)
-      q.meshes.forEach((m) => {
-        m.position.copy(center).multiplyScalar(-1)
-        pivot.add(m)
-      })
-      return {
-        pivot,
-        base: center.clone(),
-        radius: size.y / 2,
-        outer: (side > 0 ? q.box.max.x : q.box.min.x) - center.x,
-        side,
-        front: center.z > midZ,
-      }
+  return { hidden, extras, quads: quads.filter((q) => q.meshes.length), midZ }
+}
+
+// Fresh meshes and pivots for one car, sharing the cached geometry; materials come from this copy
+// of the model, so paint changes on it show up on the wheels too.
+function applyRecipe(recipe, meshes) {
+  recipe.hidden.forEach((i) => (meshes[i].visible = false))
+  const mesh = ({ src, geometry, receiveShadow }) => {
+    const m = new THREE.Mesh(geometry, meshes[src].material)
+    m.castShadow = true
+    m.receiveShadow = receiveShadow
+    return m
+  }
+  const extras = recipe.extras.map(mesh)
+  const wheels = recipe.quads.map((q) => {
+    const center = q.box.getCenter(new THREE.Vector3())
+    const size = q.box.getSize(new THREE.Vector3())
+    const side = Math.sign(center.x) || 1
+    const pivot = new THREE.Group()
+    pivot.position.copy(center)
+    q.meshes.forEach((part) => {
+      const m = mesh(part)
+      m.position.copy(center).multiplyScalar(-1)
+      pivot.add(m)
     })
+    return {
+      pivot,
+      base: center.clone(),
+      radius: size.y / 2,
+      outer: (side > 0 ? q.box.max.x : q.box.min.x) - center.x,
+      side,
+      front: center.z > recipe.midZ,
+    }
+  })
   return { wheels, extras }
 }
 
