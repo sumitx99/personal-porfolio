@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { achievements, certifications, profile } from '../data'
+import { achievements, certifications, certificationCounts, profile } from '../data'
 import { useReveal } from '../hooks'
 import { PageHead } from '../components/SectionHead'
 
@@ -101,7 +101,7 @@ export default function Certifications() {
   return (
     <div className="page">
       <PageHead
-        eyebrow={`${certifications.length} credentials & recognitions`}
+        eyebrow={`${certificationCounts.certifications} certifications · ${certificationCounts.recognitions} recognitions`}
         title="Certifications"
         intro="The certificates themselves — from cloud foundations to generative AI — plus a few podiums. Click any one to see it full size or verify it with the issuer."
       >
@@ -123,7 +123,7 @@ export default function Certifications() {
         ))}
       </div>
       <p className="found">
-        {list.length} {list.length === 1 ? 'credential' : 'credentials'} found
+        {list.length} {list.length === 1 ? 'result' : 'results'} found
       </p>
 
       <div className="certx-grid">

@@ -4,6 +4,7 @@ export const profile = {
   role: 'Software Engineer · AI/ML',
   location: 'Chandigarh, India',
   email: 'sumitranjan2207@gmail.com',
+  resume: '/resume/Sumit_Kumar_Ranjan_Resume.pdf',
   // Booking page for the "Let's talk" button, e.g. 'https://cal.com/sumitx99/30min'. Empty = opens an email.
   booking: 'https://cal.com/skranjan/30min?overlayCalendar=true',
   github: 'https://github.com/sumitx99',
@@ -300,6 +301,14 @@ export const certifications = [
     photo: true,
   },
 ]
+
+// Keep certificate counts consistent across Home, Explore and the listing page.
+const recognitionCount = certifications.filter((cert) => cert.category === 'Recognition').length
+export const certificationCounts = {
+  certifications: certifications.length - recognitionCount,
+  recognitions: recognitionCount,
+  total: certifications.length,
+}
 
 export const achievements = [
   {

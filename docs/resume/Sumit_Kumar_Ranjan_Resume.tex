@@ -1,0 +1,197 @@
+%-------------------------
+% Resume — Sumit Kumar Ranjan
+% ATS-friendly: single column, standard section names, real text (no icons),
+% plain links, \pdfgentounicode so the PDF text layer parses cleanly.
+% Based off of: https://github.com/sb2nov/resume (MIT)
+%-------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\input{glyphtounicode}
+
+% Margins
+\addtolength{\oddsidemargin}{-0.55in}
+\addtolength{\evensidemargin}{-0.55in}
+\addtolength{\textwidth}{1.1in}
+\addtolength{\topmargin}{-.6in}
+\addtolength{\textheight}{1.2in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Section headings: clear gap above, thin rule below
+\titleformat{\section}{\scshape\raggedright\large\bfseries}{}{0em}{}[\color{black}\titlerule]
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+
+% Machine-readable PDF text for ATS parsers
+\pdfgentounicode=1
+
+% Body text slightly smaller, with comfortable line spacing
+\renewcommand{\baselinestretch}{1.08}
+
+%-------------------------
+% Custom commands (no negative spacing anywhere)
+\newcommand{\resumeItem}[1]{\item #1}
+
+% Company / school: name + dates on line 1, role + place on line 2
+\newcommand{\resumeSubheading}[4]{
+  \item
+    \begin{tabular*}{\textwidth}[t]{@{}l@{\extracolsep{\fill}}r@{}}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small #3} & \textit{\small #4} \\
+    \end{tabular*}
+}
+
+% Project: name + links on line 1 with year, tech stack on line 2
+\newcommand{\resumeProjectHeading}[3]{
+  \item
+    \begin{tabular*}{\textwidth}[t]{@{}l@{\extracolsep{\fill}}r@{}}
+      #1 & \textbf{\small #2} \\
+      \textit{\small #3} & \\
+    \end{tabular*}
+}
+
+\setlist[itemize]{itemsep=2pt, parsep=0pt, topsep=2pt}
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0in, label={}, itemsep=8pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.2in, topsep=3pt, before=\small]}
+\newcommand{\resumeItemListEnd}{\end{itemize}}
+
+%-------------------------------------------
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    {\Huge \scshape Sumit Kumar Ranjan} \\ \vspace{3pt}
+    \small Software Engineer $|$ Backend, LLM \& RAG Systems $|$ Mohali, Punjab, India \\ \vspace{2pt}
+    +91-8955411699 $|$
+    \href{mailto:sumitranjan2207@gmail.com}{sumitranjan2207@gmail.com} $|$
+    \href{https://www.linkedin.com/in/sumitx99/}{linkedin.com/in/sumitx99} $|$
+    \href{https://github.com/sumitx99}{github.com/sumitx99} $|$
+    \href{https://personal-porfolio.sumitranjan2207.workers.dev/}{Portfolio}
+\end{center}
+
+%-----------SUMMARY-----------
+\section{Summary}
+{\small Software Engineer building backend services, event-driven pipelines and LLM applications. Hands-on with
+FastAPI microservices, Apache Kafka, PostgreSQL, Retrieval-Augmented Generation (RAG) and Text-to-SQL. Oracle Certified
+Generative AI Professional, co-author of a Springer-published research paper, and 630+ DSA problems solved.\par}
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {Pharmaco Evidence}{Aug 2025 -- Present}
+      {Software Engineer}{Mohali, Punjab}
+      \resumeItemListStart
+        \resumeItem{Build and maintain backend microservices in \textbf{Python} and \textbf{FastAPI} that power AI-driven evidence products.}
+        \resumeItem{Develop event streaming pipelines on \textbf{Apache Kafka} to move data between services asynchronously.}
+        \resumeItem{Design and integrate \textbf{REST APIs} and third-party services, with data stored in \textbf{PostgreSQL}.}
+      \resumeItemListEnd
+
+    \resumeSubheading
+      {EOXS}{May 2025 -- Aug 2025}
+      {AI Developer Intern}{Remote}
+      \resumeItemListStart
+        \resumeItem{Built AI modules inside the EOXS ERP for automation and predictive analytics in the steel industry.}
+        \resumeItem{Designed \textbf{machine learning} models for demand forecasting and operational efficiency.}
+        \resumeItem{Shipped \textbf{Contract Review AI}, a PO--SO comparison tool (Next.js, React) that pulls Sales Order PDFs from
+        \textbf{Odoo ERP} over XML-RPC/REST and flags discrepancies with an LLM, cutting manual review effort by \textbf{90\%}.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------
+\section{Projects}
+\resumeSubHeadingListStart
+
+  \resumeProjectHeading
+    {\textbf{Sonia -- RAG Document Chatbot} $|$ \href{https://github.com/sumitx99/SONIA-AI}{\underline{GitHub}}}{2025}
+    {FastAPI, Next.js, Gemini, LlamaParse}
+    \resumeItemListStart
+      \resumeItem{Built a RAG chatbot with layout-aware PDF parsing (\textbf{LlamaParse}) and \textbf{two-stage retrieval}: vector search for the top 25 chunks, then a \textbf{cross-encoder re-ranker} for the top 5.}
+      \resumeItem{Added SHA-based duplicate detection against \textbf{ChromaDB} so known PDFs skip re-processing, reducing processing time by \textbf{80\%}.}
+    \resumeItemListEnd
+
+  \resumeProjectHeading
+    {\textbf{Claim AI Assistant -- Text-to-SQL + RAG} $|$ \href{https://github.com/sumitx99/Claim-AI-Assistant}{\underline{GitHub}}}{2025}
+    {React, FastAPI, PostgreSQL, LangChain}
+    \resumeItemListStart
+      \resumeItem{Users upload insurance claims as CSV and ask questions in plain English; a router sends structured queries to \textbf{Text-to-SQL} on PostgreSQL and reasoning-heavy ones to \textbf{RAG}.}
+      \resumeItem{Streamed LLM answers to the React client for a responsive chat experience.}
+    \resumeItemListEnd
+
+  \resumeProjectHeading
+    {\textbf{Kite -- SaaS Delivery Marketplace} $|$ \href{https://kite-frontend-1u77.onrender.com/}{\underline{Live}}}{2026}
+    {React, FastAPI, PostgreSQL}
+    \resumeItemListStart
+      \resumeItem{Built with a four-person team: a marketplace connecting clients with vetted developers, with milestone-based payments and invoices.}
+      \resumeItem{Implemented \textbf{role-based access control} for clients, team leads and admins, plus task boards, project chat and status tracking.}
+    \resumeItemListEnd
+
+  \resumeProjectHeading
+    {\textbf{RideBridge -- Exact-Pickup Ride Linker} $|$ \href{https://ride-bridge-phi.vercel.app/}{\underline{Live}} $|$ \href{https://github.com/sumitx99/RideBridge}{\underline{GitHub}}}{2026}
+    {React, Vite, Google Maps \& Places API}
+    \resumeItemListStart
+      \resumeItem{Lets users pin the exact gate of large venues by search, voice input or tap, then passes exact coordinates into \textbf{Uber via deep links} and \textbf{Rapido via Android intents}.}
+    \resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+%-----------SKILLS-----------
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0in, label={}, itemsep=2pt, before=\small]
+     \item \textbf{Languages:} Python, Java, C++, C, JavaScript, TypeScript, SQL
+     \item \textbf{Backend:} FastAPI, Flask, REST APIs, Microservices, Apache Kafka
+     \item \textbf{AI / ML:} LLMs, RAG, LangChain, LlamaIndex, LangSmith, Prompt Engineering, PyTorch, TensorFlow, scikit-learn, YOLOv8, OpenCV
+     \item \textbf{Frontend:} React, Next.js, Tailwind CSS, Three.js
+     \item \textbf{Databases \& Cloud:} PostgreSQL, MySQL, SQLite, ChromaDB, AWS, Azure, Oracle Cloud (OCI), Linux, Git
+\end{itemize}
+
+%-----------PUBLICATIONS-----------
+\section{Publications}
+\begin{itemize}[leftmargin=0.2in, before=\small]
+  \resumeItem{\textbf{Cascade-Level Fake News Classification Using Graph Attention Networks over Diffusion Trees} -- Co-author, presented at \textbf{BIDA 2026 (Springer)}.}
+\end{itemize}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Chandigarh University}{2022 -- 2026}
+      {B.E. Computer Science and Engineering (AI \& ML) -- CGPA: 8.04}{Mohali, Punjab}
+  \resumeSubHeadingListEnd
+
+%-----------CERTIFICATIONS-----------
+\section{Certifications}
+\begin{itemize}[leftmargin=0.2in, before=\small]
+  \resumeItem{Oracle Cloud Infrastructure 2025 Certified \textbf{Generative AI Professional} -- Oracle (2025)}
+  \resumeItem{Microsoft Certified: \textbf{Azure AI Fundamentals (AI-900)} -- Microsoft (2024)}
+  \resumeItem{AWS Academy Graduate -- Cloud Foundations -- Amazon Web Services (2023)}
+\end{itemize}
+
+%-----------ACHIEVEMENTS-----------
+\section{Achievements}
+\begin{itemize}[leftmargin=0.2in, before=\small]
+  \resumeItem{\textbf{1st Runner-up, BIZINNOVATHON '24} (Bajaj Allianz) -- national hackathon, 100+ teams; won INR 15,000 and internship offers.}
+  \resumeItem{\textbf{8th rank of 700+} in Hash It Out, a national coding contest by Coding Ninjas (2024).}
+  \resumeItem{\textbf{630+ DSA problems} solved across LeetCode, CodeChef, Code360, GeeksforGeeks and Codeforces.}
+\end{itemize}
+
+\end{document}

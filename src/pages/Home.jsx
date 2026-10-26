@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { profile, roles, experience, education, projects, skills, experiments, certifications, coding } from '../data'
+import { profile, roles, experience, education, projects, skills, experiments, certificationCounts, coding } from '../data'
 import { useIsSmall, useReveal } from '../hooks'
 import SectionHead from '../components/SectionHead'
 import ProjectShowcase from '../components/ProjectShowcase'
@@ -56,7 +56,10 @@ function Hero({ small }) {
           that turn messy data into things people actually use.
         </p>
         <div className="hero-cta">
-          <Link className="btn" to="/#projects">
+          <a className="btn" href={profile.resume} download>
+            Download resume <span aria-hidden="true">↓</span>
+          </a>
+          <Link className="btn btn-ghost" to="/#projects">
             See my work <span aria-hidden="true">→</span>
           </Link>
           <a className="btn btn-ghost" href={profile.github} target="_blank" rel="noreferrer">
@@ -78,7 +81,7 @@ function About() {
   const stats = [
     ['2', 'engineering roles'],
     ['2', 'products live'],
-    ['10', 'certifications'],
+    [certificationCounts.certifications, 'certifications'],
     ['1st', 'runner-up, BIZINNOVATHON'],
   ]
   return (
@@ -196,7 +199,7 @@ function Explore() {
     {
       to: '/certifications',
       label: 'Certifications',
-      count: `${certifications.filter((c) => c.category !== 'Recognition').length} credentials`,
+      count: `${certificationCounts.certifications} certifications`,
       text: 'Oracle, Microsoft, AWS and more — plus hackathon wins.',
       preview: (
         <div className="tile-stack">

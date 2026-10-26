@@ -3995,7 +3995,15 @@ a.hbar:hover .hbar-label {
 
 /* The shared 3D canvas sits above page content but under the header and chat. */
 .scene-canvas {
-  z-index: 10;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.expx .stage-caption,
+.expx .certx-zoom {
+  z-index: 2;
 }
 
 .tile-minis {

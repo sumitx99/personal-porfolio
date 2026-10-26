@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import * as THREE from 'three'
 import { PIT_TIMELINE as T } from '../f1'
-import { dressCrew, makeBlanketTyre, makeGantry, makeHose, makeJack, makeParkedGun, makeWheelGun, updateHangingHose } from './PitGear'
+import { disposeEquipment, dressCrew, makeBlanketTyre, makeGantry, makeHose, makeJack, makeParkedGun, makeWheelGun, updateHangingHose } from './PitGear'
 
 // Rigged, animated human (Mixamo "Vanguard" from the three.js examples), dressed as a pit mechanic.
 const MODEL = '/crew/mechanic.glb'
@@ -123,8 +123,18 @@ export default function PitCrew({ rig, suit, trim, pitStart }) {
     })
     return { hoses, anchors, gantry, parked, jacks, tyres }
   }, [spots, rig, trim])
+  const inlet = useMemo(() => new THREE.Vector3(), [])
 
-  useEffect(() => () => crew.forEach((m) => m.mixer.stopAllAction()), [crew])
+  useEffect(() => {
+    crew.forEach((member) => { member.run.play(); member.idle.play() })
+    const shared = new Set()
+    gltf.scene.traverse((object) => { if (object.geometry) shared.add(object.geometry) })
+    return () => {
+      crew.forEach((member) => member.mixer.stopAllAction())
+      disposeEquipment(crew.map((member) => member.root), shared)
+      disposeEquipment([...gear.hoses, gear.gantry, ...gear.parked, ...gear.jacks, ...gear.tyres.map((g) => g.tyre)])
+    }
+  }, [crew, gear, gltf])
 
   useFrame((state, delta) => {
     const t = pitStart == null ? Infinity : (state.clock.elapsedTime - pitStart)
@@ -146,8 +156,8 @@ export default function PitCrew({ rig, suit, trim, pitStart }) {
       m.root.position.lerpVectors(s.home, s.work, at)
       // Face where you're running; face the car while working.
       const outbound = t > T.jackDown
-      const dir = new THREE.Vector3().subVectors(s.work, s.home).multiplyScalar(outbound ? -1 : 1)
-      const runYaw = yawTo(dir.x, dir.z)
+      const direction = outbound ? -1 : 1
+      const runYaw = yawTo((s.work.x - s.home.x) * direction, (s.work.z - s.home.z) * direction)
       const workYaw = s.axis === 'x' ? yawTo(s.face, 0) : yawTo(0, s.face)
       m.root.rotation.y = running ? runYaw : workYaw
 
@@ -165,7 +175,6 @@ export default function PitCrew({ rig, suit, trim, pitStart }) {
     })
 
     const lift = inPit ? span(t, T.arrive, T.jackUp) * (1 - span(t, T.wheelsOn, T.jackDown)) : 0
-    const inlet = new THREE.Vector3()
     spots.forEach((s, i) => {
       // Hose from the gun up to its reel on the gantry, following the gunner; when nobody is out,
       // the gun hangs parked on its line instead.

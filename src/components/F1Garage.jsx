@@ -1,12 +1,15 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import SceneRuntime from './SceneRuntime'
+import { memo, Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { ContactShadows, Environment, Html, Lightformer, OrbitControls, useGLTF, useProgress } from '@react-three/drei'
+import { Environment, Html, Lightformer, OrbitControls, useGLTF, useProgress } from '@react-three/drei'
 import * as THREE from 'three'
 import { COMPOUNDS, PIT_TIMELINE as T } from '../f1'
 import PitCrew from './PitCrew'
 import PitLane from './PitLane'
 import { splitWheels } from './carRig'
 import { TouchScroll, useFrameloop } from '../hooks'
+import GarageShadows from './GarageShadows'
+import StaticBatch from './StaticBatch'
 
 const PAINT_PART = /paint/i
 
@@ -44,16 +47,19 @@ function awayFromBox(u) {
 
 function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap, driveThrough }) {
   const { scene: original } = useGLTF(team.file)
+  const invalidate = useThree((state) => state.invalidate)
 
   // Clone per mount and split the wheels once; also centre the car in its pit box.
   const rig = useMemo(() => {
     const scene = original.clone(true)
+    const paintMaterials = new Map()
     scene.traverse((o) => {
       if (o.isMesh) {
         o.castShadow = true
         o.receiveShadow = true
         if (PAINT_PART.test(o.material?.name || '')) {
-          o.material = o.material.clone()
+          if (!paintMaterials.has(o.material)) paintMaterials.set(o.material, o.material.clone())
+          o.material = paintMaterials.get(o.material)
           o.userData.paint = { map: o.material.map, color: o.material.color.clone() }
         }
       }
@@ -64,8 +70,10 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap, driveThr
     const { wheels, extras } = splitWheels(scene)
     const box = new THREE.Box3().setFromObject(scene)
     const offset = new THREE.Vector3(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2)
-    return { scene, wheels, extras, offset, minZ: box.min.z, maxZ: box.max.z }
+    return { scene, wheels, extras, offset, minZ: box.min.z, maxZ: box.max.z, paintMaterials }
   }, [original])
+
+  useEffect(() => () => rig.paintMaterials.forEach((material) => material.dispose()), [rig])
 
   // Custom paint swaps the livery texture for a solid colour; decals live on other materials and stay.
   useEffect(() => {
@@ -76,7 +84,8 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap, driveThr
       o.material.color.set(paint || p.color)
       o.material.needsUpdate = true
     })
-  }, [paint, rig])
+    invalidate()
+  }, [paint, rig, invalidate])
 
   const body = useRef()
   const drive = useRef()
@@ -131,10 +140,12 @@ function Car({ team, compound, paint, pitStart, onPitDone, onWheelSwap, driveThr
     <group position={rig.offset}>
       <group ref={drive}>
         <group ref={body}>
-          <primitive object={rig.scene} />
-          {rig.extras.map((m, i) => (
-            <primitive key={i} object={m} />
-          ))}
+          <StaticBatch cellSize={Infinity} revision={rig}>
+            <primitive object={rig.scene} />
+            {rig.extras.map((m, i) => (
+              <primitive key={i} object={m} />
+            ))}
+          </StaticBatch>
         </group>
         {rig.wheels.map((w, i) => (
           <primitive key={i} object={w.pivot}>
@@ -246,11 +257,12 @@ function ClockBridge({ clockRef }) {
   return null
 }
 
-export default function F1Garage({ team, compound, paint, pitStart, onPitDone, onWheelSwap, autoRotate, clockRef, small, driveThrough = false, pitCam = false }) {
+function F1Garage({ team, compound, paint, pitStart, onPitDone, onWheelSwap, autoRotate, clockRef, small, driveThrough = false, pitCam = false }) {
   const canvas = useRef()
-  const frameloop = useFrameloop(canvas)
+  const frameloop = useFrameloop(canvas, { continuous: autoRotate || pitStart != null || compound === 'wet' || pitCam })
   return (
-    <Canvas ref={canvas} frameloop={frameloop} shadows={!small} dpr={small ? 1 : [1, 1.5]} camera={{ position: [5.2, 1.9, 4.2], fov: 34 }} gl={{ antialias: !small }}>
+    <Canvas ref={canvas} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [5.2, 1.9, 4.2], fov: 34 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
+      <SceneRuntime name="garage" />
       <TouchScroll />
       <ClockBridge clockRef={clockRef} />
       <FitCamera />
@@ -258,13 +270,13 @@ export default function F1Garage({ team, compound, paint, pitStart, onPitDone, o
       <color attach="background" args={['#06080c']} />
       <fog attach="fog" args={['#06080c', 20, 60]} />
       <hemisphereLight args={['#cfd8ff', '#16171b', 0.55]} />
-      <directionalLight position={[5, 9, 6]} intensity={2.4} castShadow={!small} shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004}>
+      <directionalLight position={[5, 9, 6]} intensity={2.4} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004}>
         <orthographicCamera attach="shadow-camera" args={[-6, 6, 6, -6, 0.1, 30]} />
       </directionalLight>
       <spotLight position={[0, 9, 0]} angle={0.5} penumbra={0.9} intensity={120} />
       {/* Night-race lighting for reflections: the gantry LEDs overhead, the bright garage mouth on one
           side and the floodlights over the pit wall on the other. */}
-      <Environment resolution={small ? 128 : 512}>
+      <Environment resolution={512} frames={1}>
         <Lightformer form="rect" intensity={4} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[8, 2.5, 1]} />
         <Lightformer form="rect" intensity={2.4} position={[-7, 2.2, 0]} rotation-y={Math.PI / 2} scale={[12, 4, 1]} />
         <Lightformer form="rect" intensity={1.4} color="#dfe6ff" position={[12, 9, 0]} rotation-y={-Math.PI / 2} scale={[30, 2, 1]} />
@@ -272,14 +284,12 @@ export default function F1Garage({ team, compound, paint, pitStart, onPitDone, o
         <Lightformer form="rect" intensity={0.6} position={[0, 2, 12]} rotation-y={Math.PI} scale={[14, 2, 1]} />
       </Environment>
 
-      <Suspense fallback={null}>
-        <PitLane team={team} wet={compound === 'wet'} pitStart={pitStart} small={small} />
-      </Suspense>
       <Suspense fallback={<Loader />}>
+        <PitLane team={team} wet={compound === 'wet'} pitStart={pitStart} />
         <Car key={team.id} team={team} compound={compound} paint={paint} pitStart={pitStart} onPitDone={onPitDone} onWheelSwap={onWheelSwap} driveThrough={driveThrough} />
+        <GarageShadows active={pitStart != null} revision={`${team.id}:${compound}`} />
       </Suspense>
       {compound === 'wet' && <Rain />}
-      {!small && <ContactShadows position={[0, 0.004, 0]} opacity={0.75} scale={9} blur={2.2} far={2} resolution={1024} />}
       <PitCam active={pitCam} small={small} />
       <OrbitControls
         enabled={!pitCam}
@@ -294,3 +304,5 @@ export default function F1Garage({ team, compound, paint, pitStart, onPitDone, o
     </Canvas>
   )
 }
+
+export default memo(F1Garage)
