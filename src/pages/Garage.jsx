@@ -459,39 +459,6 @@ export default function Garage() {
         </aside>
       </div>
 
-      <p className="credits">
-        3D car models on Sketchfab by{' '}
-        <a href="https://sketchfab.com/Tyler_Dave" target="_blank" rel="noreferrer">
-          Dave Love (Tyler_Dave)
-        </a>{' '}
-        and{' '}
-        <a href="https://sketchfab.com/abuhossain844" target="_blank" rel="noreferrer">
-          Abu Saif
-        </a>
-        , and the{' '}
-        <a href="https://sketchfab.com/3d-models/marina-bay-street-circuit-e665d831c57546609d4c15287a6107b7" target="_blank" rel="noreferrer">
-          Marina Bay Street Circuit
-        </a>{' '}
-        by Dave Love, licensed{' '}
-        <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">
-          CC BY 4.0
-        </a>
-        :{' '}
-        {ready.map((t, i) => (
-          <span key={t.id}>
-            <a href={t.url} target="_blank" rel="noreferrer">
-              {t.name} {t.car}
-            </a>
-            {t.basedOn ? ` (repainted ${t.basedOn} model)` : ''}
-            {i < ready.length - 1 ? ', ' : ''}
-          </span>
-        ))}
-        . Pit crew: Mixamo character from the three.js examples. Pit lane and garage floor textures from{' '}
-        <a href="https://polyhaven.com/a/asphalt_pit_lane" target="_blank" rel="noreferrer">
-          Poly Haven
-        </a>{' '}
-        (CC0). Models compressed for the web; team names and liveries belong to their owners. A fan project, not affiliated with F1 or any team.
-      </p>
     </div>
   )
 }

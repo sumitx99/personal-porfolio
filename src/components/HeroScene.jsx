@@ -1,4 +1,5 @@
-import { useMemo, useRef } from 'react'
+import SceneRuntime from './SceneRuntime'
+import { memo, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Float, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
@@ -136,14 +137,14 @@ function Rings() {
 }
 
 // Small objects drifting around the core: the "tools" orbiting the work.
-function Satellites({ small }) {
+function Satellites() {
   const items = [
     { pos: [-3.1, 1.4, -0.5], geo: <boxGeometry args={[0.38, 0.38, 0.38]} /> },
     { pos: [3.0, -1.2, 0.3], geo: <octahedronGeometry args={[0.32]} /> },
     { pos: [2.4, 1.9, -1], geo: <torusKnotGeometry args={[0.18, 0.06, 64, 8]} /> },
     { pos: [-2.6, -1.8, 0.6], geo: <tetrahedronGeometry args={[0.34]} /> },
   ]
-  return items.filter((_, i) => !small || i % 2).map((it, i) => (
+  return items.map((it, i) => (
     <Float key={i} speed={1.6} rotationIntensity={2} floatIntensity={1.8}>
       <mesh position={it.pos}>
         {it.geo}
@@ -189,16 +190,16 @@ function Scene({ small }) {
         <group scale={scale} position={[0, small ? 2.1 : 0, 0]}>
           <Core />
           <Rings />
-          <NeuralShell count={small ? 40 : 140} radius={3.3} />
-          <Satellites small={small} />
+          <NeuralShell count={140} radius={3.3} />
+          <Satellites />
         </group>
       </Rig>
-      <Sparkles count={small ? 24 : 90} scale={[14, 9, 6]} size={2} speed={0.3} color={ACCENT} opacity={0.5} />
+      <Sparkles count={90} scale={[14, 9, 6]} size={2} speed={0.3} color={ACCENT} opacity={0.5} />
     </>
   )
 }
 
-export default function HeroScene({ small }) {
+function HeroScene({ small }) {
   const ref = useRef()
   const frameloop = useFrameloop(ref)
   return (
@@ -206,10 +207,13 @@ export default function HeroScene({ small }) {
       ref={ref}
       frameloop={frameloop}
       camera={{ position: [0, 0, 8], fov: 45 }}
-      dpr={small ? 1 : [1, 1.5]}
-      gl={{ antialias: !small, powerPreference: 'high-performance', alpha: true }}
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, powerPreference: 'high-performance', alpha: true }}
     >
+      <SceneRuntime name="hero" />
       <Scene small={small} />
     </Canvas>
   )
 }
+
+export default memo(HeroScene)

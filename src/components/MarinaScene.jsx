@@ -1,4 +1,5 @@
-import { memo, Suspense, useEffect, useMemo, useRef } from 'react'
+import SceneRuntime from './SceneRuntime'
+import { memo, Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Html, Lightformer, useGLTF, useProgress } from '@react-three/drei'
 import * as THREE from 'three'
@@ -8,6 +9,7 @@ import { RaceCameraRig } from '../race/camera'
 import { FrontWheelSteering, steerFrontWheels } from '../race/steering'
 import wheelCalibration from '../race/wheel-calibration.json'
 import { RACE_FRAME } from '../race/frameOrder'
+import { batchStaticMeshes } from '../three/staticBatch'
 
 // "Marina Bay Street Circuit" by Dave Love (Tyler_Dave) on Sketchfab, CC BY 4.0, compressed in
 // public/tracks. The race itself (positions, pit stops) comes from src/race/engine.js.
@@ -71,13 +73,15 @@ function RacePerformance({ engine }) {
     samples.current.push({ frame: dt * 1000, physics: engine.stepMs || 0 })
     if (samples.current.length < 180) return
     const frames = samples.current.map((s) => s.frame).sort((a, b) => a - b)
+    const rendered = gl.domElement.dataset.renderMetrics
+      ? JSON.parse(gl.domElement.dataset.renderMetrics) : gl.info.render
     gl.domElement.dataset.racePerf = JSON.stringify({
       fps: Math.round(1000 / (frames.reduce((a, b) => a + b, 0) / frames.length)),
       medianMs: +frames[90].toFixed(1),
       p95Ms: +frames[171].toFixed(1),
       physicsMs: +(samples.current.reduce((n, s) => n + s.physics, 0) / 180).toFixed(2),
-      triangles: gl.info.render.triangles,
-      calls: gl.info.render.calls,
+      triangles: rendered.triangles,
+      calls: rendered.calls,
       dpr: gl.getPixelRatio(),
       sceneCommits: engine.sceneCommits || 0,
     })
@@ -145,13 +149,14 @@ function Car({ car, engine, speed }) {
     const flap = rig.root.getObjectByName('DRS_Flap')
     return flap && { flap, rest: flap.quaternion.clone(), open: 0 }
   }, [rig])
-  useEffect(() => {
-    const shared = new Set()
-    scene.traverse((o) => { if (o.isMesh) shared.add(o.geometry) })
-    const generated = new Set()
-    rig.root.traverse((o) => { if (o.isMesh && !shared.has(o.geometry)) generated.add(o.geometry) })
-    return () => generated.forEach((geometry) => geometry.dispose())
-  }, [rig, scene])
+  // Split-wheel geometry belongs to carRig's recipe cache and can be used by other
+  // mounts. Only this rig's merged body buffers are owned by this component.
+  useLayoutEffect(() => {
+    // Keep the animated DRS flap and wheel pivots independent; batch only the body.
+    const flap = rig.root.getObjectByName('DRS_Flap')
+    const batches = batchStaticMeshes(rig.body, { exclude: flap ? [flap] : [] })
+    return () => batches.dispose()
+  }, [rig])
   const placed = useRef(false)
   useFrame((_, dt) => {
     const frame = Math.min(dt, 0.05)
@@ -231,16 +236,17 @@ function MarinaScene({ engine, cameraMode = 'chase', small = false, speed = 1 })
   return (
     <Canvas
       camera={initialCamera}
-      dpr={[1, small ? 1.25 : 1.5]}
-      gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
     >
+      <SceneRuntime name="race" />
       {/* Singapore races at night: deep blue sky, floodlit track */}
       <color attach="background" args={['#0b1222']} />
       <fog attach="fog" args={['#0b1222', 600, 3200]} />
       <hemisphereLight args={['#bfcaf0', '#14110e', 0.7]} />
       <directionalLight position={[400, 900, 300]} intensity={0.7} color="#ffe8c4" />
       {/* reflections: the same studio strips as the garage, so the paint and carbon look the same out here */}
-      <Environment resolution={small ? 128 : 512} environmentIntensity={1}>
+      <Environment resolution={512} frames={1} environmentIntensity={1}>
         <Lightformer form="rect" intensity={4} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[8, 2.5, 1]} />
         <Lightformer form="rect" intensity={2.4} position={[-7, 2.2, 0]} rotation-y={Math.PI / 2} scale={[12, 4, 1]} />
         <Lightformer form="rect" intensity={1.4} color="#dfe6ff" position={[12, 9, 0]} rotation-y={-Math.PI / 2} scale={[30, 2, 1]} />

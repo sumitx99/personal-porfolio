@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { createDynamicTube } from '../three/dynamicTube'
 
 // Procedural pit equipment, modelled at real scale (metres).
 
@@ -12,6 +13,24 @@ const mat = {
   white: new THREE.MeshStandardMaterial({ color: '#f2f2f2', roughness: 0.5 }),
   reflective: new THREE.MeshStandardMaterial({ color: '#e8eaee', metalness: 0.6, roughness: 0.25 }),
   hose: new THREE.MeshStandardMaterial({ color: '#16171a', roughness: 0.6 }),
+}
+
+// Primitives are not disposed automatically by Fiber. Keep module-level materials
+// and cached blanket textures, but release each team's procedural GPU resources.
+export function disposeEquipment(roots, preserveGeometries = new Set()) {
+  const geometries = new Set()
+  const materials = new Set()
+  const skeletons = new Set()
+  const shared = new Set(Object.values(mat))
+  roots.filter(Boolean).forEach((root) => root.traverse((object) => {
+    if (object.geometry && !preserveGeometries.has(object.geometry)) geometries.add(object.geometry)
+    const list = Array.isArray(object.material) ? object.material : [object.material]
+    list.forEach((material) => { if (material && !shared.has(material)) materials.add(material) })
+    if (object.skeleton) skeletons.add(object.skeleton)
+  }))
+  geometries.forEach((geometry) => geometry.dispose())
+  materials.forEach((material) => material.dispose())
+  skeletons.forEach((skeleton) => skeleton.dispose())
 }
 
 const mesh = (geo, material, props = {}) => {
@@ -64,12 +83,21 @@ export function updateHose(hose, from, side, z) {
 
 // Air hose hanging from the overhead gantry down to the gun, with a little sag in the middle.
 export function updateHangingHose(hose, from, anchor) {
-  const mid = new THREE.Vector3().lerpVectors(from, anchor, 0.5)
-  mid.y -= 0.35
-  mid.x += (from.x - anchor.x) * 0.2
-  const pts = [from.clone(), new THREE.Vector3(from.x, from.y + 0.25, from.z), mid, new THREE.Vector3(anchor.x, anchor.y - 0.35, anchor.z), anchor.clone()]
-  hose.geometry.dispose()
-  hose.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.017, 7)
+  if (!hose.userData.tube) {
+    hose.geometry.dispose()
+    hose.userData.tube = createDynamicTube(5)
+    hose.geometry = hose.userData.tube.geometry
+  }
+  const tube = hose.userData.tube
+  const pts = tube.curve.points
+  pts[0].copy(from)
+  pts[1].set(from.x, from.y + 0.25, from.z)
+  pts[2].lerpVectors(from, anchor, 0.5)
+  pts[2].y -= 0.35
+  pts[2].x += (from.x - anchor.x) * 0.2
+  pts[3].set(anchor.x, anchor.y - 0.35, anchor.z)
+  pts[4].copy(anchor)
+  tube.update()
 }
 
 // Overhead gantry over the pit box: a rail down each side of the car carrying the wheel-gun air
