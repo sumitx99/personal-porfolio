@@ -1,9 +1,10 @@
-import { useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { PIT_TIMELINE as T, TEAMS } from '../f1'
-import { makeBlanketTyre } from './PitGear'
+import { disposeEquipment, makeBlanketTyre } from './PitGear'
+import StaticBatch from './StaticBatch'
 
 // A night-race pit lane laid out like a real one. The car sits in its pit box facing +Z, the garage
 // opens onto the lane at -X, and the fast lane, pit wall and main straight run along +X.
@@ -223,6 +224,11 @@ function Garage({ team, z, main }) {
       return g
     })
   }, [team, main])
+  useEffect(() => () => {
+    sign.dispose()
+    wall.dispose()
+    disposeEquipment(tyres)
+  }, [sign, wall, tyres])
   const back = GARAGE_X - GARAGE_DEPTH
   const mid = GARAGE_X - GARAGE_DEPTH / 2
   return (
@@ -397,6 +403,7 @@ function Circuit() {
       }),
     [],
   )
+  useEffect(() => () => crowd.dispose(), [crowd])
   return (
     <group>
       <group position={[PIT_WALL_X + 25, 6, 0]} rotation-y={-Math.PI / 2}>
@@ -417,11 +424,13 @@ function Circuit() {
   )
 }
 
-export default function PitLane({ team, wet, pitStart, small }) {
+function PitLane({ team, wet, pitStart }) {
   const { asphalt, floor } = useSurfaces(wet)
   const box = useMemo(() => boxTexture(team.color), [team.color])
+  useEffect(() => () => box.dispose(), [box])
+  useEffect(() => () => { asphalt.dispose(); floor.dispose() }, [asphalt, floor])
   const others = useMemo(() => TEAMS.filter((t) => t.id !== team.id), [team.id])
-  const neighbours = small ? [-1, 1] : [-2, -1, 1, 2]
+  const neighbours = [-2, -1, 1, 2]
   const laneW = PIT_WALL_X - GARAGE_X
   return (
     <group>
@@ -450,13 +459,17 @@ export default function PitLane({ team, wet, pitStart, small }) {
         <meshStandardMaterial map={box} transparent roughness={0.6} depthWrite={false} />
       </mesh>
 
-      <Garage team={team} z={0} main />
-      {neighbours.map((n) => (
-        <Garage key={n} team={others[(n + 2 + others.length) % others.length]} z={n * GARAGE_W} />
-      ))}
+      <StaticBatch revision={team.id}>
+        <Garage team={team} z={0} main />
+        {neighbours.map((n) => (
+          <Garage key={n} team={others[(n + 2 + others.length) % others.length]} z={n * GARAGE_W} />
+        ))}
+        <PitWall team={team} />
+        <Circuit />
+      </StaticBatch>
       <PitGantry team={team} pitStart={pitStart} />
-      <PitWall team={team} />
-      <Circuit />
     </group>
   )
 }
+
+export default memo(PitLane)

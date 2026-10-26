@@ -386,25 +386,6 @@ export default function Coding() {
         </>
       )}
 
-      <p className="credits">
-        Stats, badges and profile from{' '}
-        <a href={profileUrl} target="_blank" rel="noreferrer">
-          Codolio
-        </a>
-        . 3D desk setup:{' '}
-        <a href="https://sketchfab.com/3d-models/gaming-desktop-pc-d1d8282c9916438091f11aeb28787b66" target="_blank" rel="noreferrer">
-          “Gaming Desktop PC”
-        </a>{' '}
-        by{' '}
-        <a href="https://sketchfab.com/Yolala1232" target="_blank" rel="noreferrer">
-          Yolala1232
-        </a>
-        , licensed{' '}
-        <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">
-          CC BY 4.0
-        </a>
-        , compressed for the web.
-      </p>
     </div>
   )
 }

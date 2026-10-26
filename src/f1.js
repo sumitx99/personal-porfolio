@@ -8,7 +8,7 @@ export const COMPOUNDS = {
 // Pit stop timeline, in seconds from the call to box.
 export const PIT_TIMELINE = { arrive: 0.85, jackUp: 1.05, wheelsOff: 1.45, wheelsOn: 1.95, jackDown: 2.15, leave: 3.05 }
 
-// 3D models from Sketchfab, CC BY 4.0 (authors credited on the Garage page). Compressed copies live in public/cars.
+// 3D models from Sketchfab, CC BY 4.0 (source credits in README.md). Compressed copies live in public/cars.
 // The Williams is the Mercedes W17 model repainted in Blender with the FW48 livery (`basedOn`).
 export const TEAMS = [
   { id: 'redbull', name: 'Red Bull', car: 'RB22', file: '/cars/redbull.glb', color: '#1e41ff', crew: '#14223f', url: 'https://sketchfab.com/3d-models/2026-redbull-rb22-0a3d24a58e0549d591a5a48c22eec383' },
