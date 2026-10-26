@@ -177,7 +177,6 @@ export default function Analytics() {
           {codolio.data?.dev?.activity && (
             <section className="chart-card reveal">
               <h3>Contribution graph</h3>
-              <p className="muted">GitHub contributions per day, live via Codolio. Pick a year or a month.</p>
               <ContributionGraph activity={codolio.data.dev.activity} profileUrl={codolio.data.dev.url} />
             </section>
           )}

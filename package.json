@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/check-resume.mjs && vite build",
     "lint": "eslint .",
+    "test": "node --test src/race/*.test.js src/three/*.test.js",
+    "audit:three": "node scripts/audit-three.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

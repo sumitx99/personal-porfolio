@@ -169,6 +169,9 @@ function Footer() {
           <p className="muted">Software engineer building AI products end to end.</p>
         </div>
         <nav className="footer-links">
+          <a href={profile.resume} download>
+            Download resume ↓
+          </a>
           <Link to="/experiments">Experiments</Link>
           <Link to="/coding">Coding</Link>
           <Link to="/certifications">Certifications</Link>
