@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Float, PerspectiveCamera, RoundedBox, View } from '@react-three/drei'
+import { useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { Float, PerspectiveCamera, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
-import { useFrameloop } from '../hooks'
+import { useFrameloop, useIsSmall } from '../hooks'
+import { CanvasBudget } from '../three/canvasBudget'
 import SceneRuntime from './SceneRuntime'
 
 // Small looping 3D scenes for the experiment cards, one per project.
@@ -17,6 +18,15 @@ function Glossy({ color = DARK, ...props }) {
 
 function Glow({ intensity = 1.6 }) {
   return <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={intensity} toneMapped={false} />
+}
+
+function Joint(props) {
+  return (
+    <mesh {...props}>
+      <sphereGeometry args={[0.075, 16, 16]} />
+      <Glow />
+    </mesh>
+  )
 }
 
 function Rig({ children, z = 5.2 }) {
@@ -160,12 +170,6 @@ function Postura() {
     shin.current.rotation.z = -0.3 - k * 1.6
     torso.current.rotation.z = -k * 0.35
   })
-  const Joint = (props) => (
-    <mesh {...props}>
-      <sphereGeometry args={[0.075, 16, 16]} />
-      <Glow />
-    </mesh>
-  )
   return (
     <Rig>
       <group position={[0, -0.1, 0]} rotation={[0, -0.5, 0]}>
@@ -213,7 +217,7 @@ function Postura() {
 }
 
 function useShieldGeometry() {
-  return useMemo(() => {
+  const geometry = useMemo(() => {
     const s = new THREE.Shape()
     s.moveTo(0, 0.75)
     s.quadraticCurveTo(0.35, 0.62, 0.6, 0.6)
@@ -226,6 +230,8 @@ function useShieldGeometry() {
     g.center()
     return g
   }, [])
+  useEffect(() => () => geometry.dispose(), [geometry])
+  return geometry
 }
 
 // Claim AI: a protective shield and claims insight bars.
@@ -236,6 +242,7 @@ function Claim() {
     const c = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.22, 0, 0), new THREE.Vector3(-0.05, -0.17, 0), new THREE.Vector3(0.25, 0.2, 0)], false, 'catmullrom', 0)
     return new THREE.TubeGeometry(c, 20, 0.045, 8)
   }, [])
+  useEffect(() => () => check.dispose(), [check])
   useFrame((s) => {
     const t = s.clock.elapsedTime
     bars.current.children.forEach((b, i) => {
@@ -282,6 +289,7 @@ function Market() {
     return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.025, 8)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  useEffect(() => () => trend.dispose(), [trend])
   useFrame((s) => {
     candles.current.children.forEach((c, i) => (c.position.y = Math.sin(s.clock.elapsedTime * 1.5 + i) * 0.04))
   })
@@ -365,6 +373,13 @@ function Jarvis() {
 
 function Car({ color, offset }) {
   const ref = useRef()
+  const outline = useMemo(() => {
+    const box = new THREE.BoxGeometry(0.72, 0.5, 0.42)
+    const edges = new THREE.EdgesGeometry(box)
+    box.dispose()
+    return edges
+  }, [])
+  useEffect(() => () => outline.dispose(), [outline])
   useFrame((s) => {
     ref.current.position.x = ((s.clock.elapsedTime * 0.5 + offset) % 2.6) - 1.6
   })
@@ -376,8 +391,7 @@ function Car({ color, offset }) {
       <RoundedBox args={[0.3, 0.14, 0.26]} radius={0.05} position={[-0.03, 0.15, 0]}>
         <Glossy color={color} />
       </RoundedBox>
-      <lineSegments position={[0, 0.06, 0]}>
-        <edgesGeometry args={[new THREE.BoxGeometry(0.72, 0.5, 0.42)]} />
+      <lineSegments position={[0, 0.06, 0]} geometry={outline}>
         <lineBasicMaterial color={ACCENT} />
       </lineSegments>
     </group>
@@ -436,6 +450,7 @@ function Ats() {
     fill.current.material.emissiveIntensity = 1 + Math.sin(s.clock.elapsedTime * 2) * 0.5
   })
   const arc = useMemo(() => new THREE.TorusGeometry(0.62, 0.07, 16, 96, Math.PI * 0.87), [])
+  useEffect(() => () => arc.dispose(), [arc])
   return (
     <Rig>
       <group position={[-0.85, 0, 0]} rotation={[0, 0.4, -0.06]}>
@@ -478,6 +493,7 @@ function Youtube() {
     const tri = new THREE.Shape([new THREE.Vector2(-0.12, -0.16), new THREE.Vector2(-0.12, 0.16), new THREE.Vector2(0.17, 0)])
     return new THREE.ExtrudeGeometry(tri, { depth: 0.05, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 3 })
   }, [])
+  useEffect(() => () => play.dispose(), [play])
   useFrame((s) => {
     const t = s.clock.elapsedTime
     pages.current.children.forEach((p, i) => {
@@ -572,75 +588,74 @@ const SCENES = {
   'Drug Review Sentiment': Drug,
 }
 
-// One renderer serves every card. Only nearby scenes are mounted; View scissors
-// drawing to each card and skips offscreen views without allocating more contexts.
-const nearby = new Set()
-const stageListeners = new Set()
-function subscribeStages(listener) {
-  stageListeners.add(listener)
-  return () => stageListeners.delete(listener)
-}
-const stageCount = () => nearby.size
-const notifyStages = () => stageListeners.forEach((listener) => listener())
+// Keep each canvas inside its card: Android Chrome scrolls DOM layers on the
+// compositor, independently of requestAnimationFrame. A fixed overlay cannot stay
+// attached during a fling/toolbar resize when the main thread misses a frame.
+const cardCanvases = new CanvasBudget(6)
+const CARD_RESIZE = { scroll: false, debounce: { resize: 120 } }
 
-function useNearScreen(ref) {
-  const [mounted, setMounted] = useState(false)
+function useCanvasLease(ref, small) {
+  const mounted = useSyncExternalStore(cardCanvases.subscribe, () => cardCanvases.has(ref.current))
+  useEffect(() => { cardCanvases.setLimit(small ? 3 : 6) }, [small])
   useEffect(() => {
     const element = ref.current
     if (!element) return
+    const priority = () => {
+      const rect = element.getBoundingClientRect()
+      const distance = Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2)
+      const visible = rect.bottom > 0 && rect.top < window.innerHeight
+      return (visible ? 0 : window.innerHeight) + distance
+    }
     const observer = new IntersectionObserver(([entry]) => {
-      setMounted(entry.isIntersecting)
-      if (entry.isIntersecting) nearby.add(element)
-      else nearby.delete(element)
-      notifyStages()
-    }, { rootMargin: '180px 0px' })
+      if (entry.isIntersecting) cardCanvases.request(element, priority)
+      else cardCanvases.release(element)
+    }, { rootMargin: '80px 0px' })
     observer.observe(element)
     return () => {
       observer.disconnect()
-      nearby.delete(element)
-      notifyStages()
+      cardCanvases.release(element)
     }
   }, [ref])
   return mounted
 }
 
-export function ExperimentStage({ name, className = 'exp-stage' }) {
-  const Scene = SCENES[name]
-  const ref = useRef()
-  const mounted = useNearScreen(ref)
-  if (!Scene) return null
+function CardCanvas({ name, Scene, frameloop }) {
+  const renderer = useRef(null)
+  const mounted = useRef(false)
+  useLayoutEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+      const gl = renderer.current
+      // Fiber delays its own context cleanup by 500ms. Retire offscreen card
+      // contexts promptly so fast flings cannot accumulate them on Android.
+      // The microtask is cancelled by StrictMode's immediate effect re-setup.
+      queueMicrotask(() => { if (!mounted.current) gl?.forceContextLoss() })
+    }
+  }, [])
   return (
-    <View ref={ref} className={className}>
-      {mounted && <Scene />}
-    </View>
+    <Canvas frameloop={frameloop} dpr={[1, 1.5]} resize={CARD_RESIZE}
+      onCreated={({ gl }) => { renderer.current = gl }}
+      gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
+      style={{ pointerEvents: 'none' }}>
+      <SceneRuntime name={`experiment:${name}`} />
+      <Scene />
+    </Canvas>
   )
 }
 
-function ClearViews() {
-  const { gl, size } = useThree()
-  useFrame(() => {
-    gl.setScissorTest(false)
-    gl.setViewport(0, 0, size.width, size.height)
-    gl.clear()
-  })
-  return null
-}
-
-export function SceneCanvas() {
+export function ExperimentStage({ name, className = 'exp-stage' }) {
+  const Scene = SCENES[name]
   const ref = useRef()
-  const count = useSyncExternalStore(subscribeStages, stageCount)
-  // Keep views aligned during native/smooth scrolling. Rendering pauses only when
-  // the page is hidden or no cards are nearby, rather than freezing a fixed overlay.
-  const frameloop = useFrameloop(ref, { observe: false, pauseOnScroll: false, continuous: count > 0 })
+  const small = useIsSmall()
+  const mounted = useCanvasLease(ref, small)
+  const frameloop = useFrameloop(ref)
+  if (!Scene) return null
   return (
-    <div ref={ref} className="scene-canvas" aria-hidden="true">
-      <Canvas frameloop={frameloop} dpr={[1, 1.5]}
-        gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
-        style={{ pointerEvents: 'none' }}>
-        <SceneRuntime name="experiments" />
-        <ClearViews />
-        <View.Port />
-      </Canvas>
+    <div ref={ref} className={className}>
+      {mounted && (
+        <CardCanvas name={name} Scene={Scene} frameloop={frameloop} />
+      )}
     </div>
   )
 }

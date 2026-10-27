@@ -3964,6 +3964,9 @@ a.hbar:hover .hbar-label {
 }
 
 .exp-stage {
+  position: relative;
+  overflow: hidden;
+  contain: layout paint;
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
@@ -3991,19 +3994,6 @@ a.hbar:hover .hbar-label {
   top: 16px;
   right: 16px;
   bottom: auto;
-}
-
-/* The shared 3D canvas sits above page content but under the header and chat. */
-.scene-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.expx .stage-caption,
-.expx .certx-zoom {
-  z-index: 2;
 }
 
 .tile-minis {
