@@ -56,10 +56,7 @@ function Hero({ small }) {
           that turn messy data into things people actually use.
         </p>
         <div className="hero-cta">
-          <a className="btn" href={profile.resume} download>
-            Download resume <span aria-hidden="true">↓</span>
-          </a>
-          <Link className="btn btn-ghost" to="/#projects">
+          <Link className="btn" to="/#projects">
             See my work <span aria-hidden="true">→</span>
           </Link>
           <a className="btn btn-ghost" href={profile.github} target="_blank" rel="noreferrer">
