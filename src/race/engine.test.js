@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { Vector3 } from 'three'
 import { RaceEngine } from './engine.js'
 import { carsOverlap } from './collision.js'
+import { TEAMS } from '../f1.js'
 
 const lap = JSON.parse(readFileSync(new URL('../data/marina-lap.json', import.meta.url)))
 const teams = Array.from({ length: 5 }, (_, i) => ({ id: `car-${i}`, name: `Car ${i}` }))
@@ -186,14 +187,19 @@ test('pit entry, stops and rejoining do not overlap race traffic', () => {
   assert.ok(engine.player().stops > 0, 'player must complete the pit stop')
 })
 
-test('twelve seeded four-lap races finish without overlap, including boost and pit merges', () => {
+test('twelve seeded full-garage four-lap races finish without overlap, including boost and pit merges', () => {
   const random = Math.random
   try {
     for (let trial = 1; trial <= 12; trial++) {
       let seed = trial
       Math.random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296)
-      const engine = new RaceEngine(lap, teams, { laps: 4, playerId: teams[0].id })
+      const grid = TEAMS.filter((team) => team.file)
+      const playerId = grid[(trial - 1) % grid.length].id
+      const engine = new RaceEngine(lap, grid, { laps: 4, playerId })
       engine.start()
+      assert.equal(engine.cars.length, grid.length)
+      assert.equal(engine.cars.filter((car) => car.player).length, 1)
+      assert.equal(engine.player().team.id, playerId)
       engine.on((type) => { if (type === 'player-box') engine.releasePlayer() })
       for (let frame = 0; frame < 7000 && engine.phase !== 'finished'; frame++) {
         if (engine.player().charge >= 1) engine.fireBoost()
