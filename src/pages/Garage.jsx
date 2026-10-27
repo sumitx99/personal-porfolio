@@ -117,11 +117,8 @@ export default function Garage() {
   }, [speed])
 
   const startRace = () => {
-    // always a six-car field: Audi and Cadillac line up every time, the rest fill the other slots
-    const pinned = ['audi', 'cadillac'].filter((id) => id !== teamId).map((id) => ready.find((t) => t.id === id)).filter(Boolean)
-    const rivals = ready.filter((t) => t.id !== teamId && !pinned.includes(t)).slice(0, 5 - pinned.length)
-    rivals.push(...pinned)
-    const e = new RaceEngine(lapData, [team, ...rivals], { laps: LAPS, playerId: teamId })
+    // Every available garage team joins the grid, including the selected player.
+    const e = new RaceEngine(lapData, ready, { laps: LAPS, playerId: teamId })
     e.on((type, car) => {
       if (type === 'go') setRadio('Lights out and away we go!')
       if (type === 'pit-entry' && car.player) setRadio(`In the pit lane. Limiter on, crew ready with ${COMPOUNDS[car.nextCompound].label.toLowerCase()}s.`)
@@ -206,7 +203,7 @@ export default function Garage() {
       <PageHead
         eyebrow="Fun zone · drag to look around"
         title="Garage"
-        intro="Pick a 2026 car, repaint it and call the crew in for a tyre change, or take it racing: four laps at Marina Bay against five rivals, under the lights."
+        intro={`Pick a 2026 car, repaint it and call the crew in for a tyre change, or take it racing: four laps at Marina Bay against all ${ready.length - 1} rival teams, under the lights.`}
       />
 
       <div className="garage">
