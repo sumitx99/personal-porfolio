@@ -429,7 +429,9 @@ export class RaceEngine {
     if (c.pitS >= this.pitLength) {
       c.mode = 'track'
       c.total = c.pitEntryTotal + this.pitSpan
-      c.lane = c.laneTarget = -LANE
+      // the pit lane ends on the centre line; drift over to the outside lane from there
+      c.lane = 0
+      c.laneTarget = -LANE
       this.place(c)
       if (this.cars.some((o) => o !== c && carsOverlap(c, o))) {
         c.mode = 'pit'
