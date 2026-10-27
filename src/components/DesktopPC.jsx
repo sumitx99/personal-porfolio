@@ -38,7 +38,7 @@ function DesktopPC({ small }) {
   const ref = useRef()
   const frameloop = useFrameloop(ref)
   return (
-    <Canvas ref={ref} frameloop={frameloop} shadows dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'high-performance' }} camera={{ position: [20, 3, 5], fov: 25 }}>
+    <Canvas ref={ref} frameloop={frameloop} resize={{ scroll: false }} shadows dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'high-performance' }} camera={{ position: [20, 3, 5], fov: 25 }}>
       <SceneRuntime name="desktop-pc" />
       <TouchScroll />
       <Suspense fallback={<Loader />}>

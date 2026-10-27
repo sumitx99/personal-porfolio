@@ -10,8 +10,11 @@ export default function RenderMetrics({ name }) {
 
 function Probe({ name }) {
   const { gl } = useThree()
+  const frameloop = useThree((state) => state.frameloop)
   const samples = useRef([])
   const previous = useRef(false)
+  const frames = useRef(0)
+  useEffect(() => { gl.domElement.dataset.renderMode = frameloop }, [gl, frameloop])
   useEffect(() => {
     const autoReset = gl.info.autoReset
     gl.info.autoReset = false
@@ -20,9 +23,12 @@ function Probe({ name }) {
       gl.info.autoReset = autoReset
       delete gl.domElement.dataset.renderMetrics
       delete gl.domElement.dataset.scene
+      delete gl.domElement.dataset.renderMode
+      delete gl.domElement.dataset.renderFrames
     }
   }, [gl, name])
   useFrame((_, dt) => {
+    gl.domElement.dataset.renderFrames = String(++frames.current)
     if (previous.current && dt > 0 && dt < 0.25) {
       samples.current.push({ ms: dt * 1000, calls: gl.info.render.calls, triangles: gl.info.render.triangles })
       if (samples.current.length >= 120) {

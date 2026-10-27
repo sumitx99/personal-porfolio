@@ -62,6 +62,34 @@ export function useScrolling() {
   return useSyncExternalStore(subscribeScroll, () => scrolling)
 }
 
+// Keep the robot fully rendered, but let its GPU sleep when nobody interacts.
+// Touch scrolling must not wake a decorative canvas on every pointermove.
+export function useRobotActivity(active, expression) {
+  const [awake, setAwake] = useState(true)
+  useEffect(() => {
+    if (active) {
+      setAwake(true)
+      return
+    }
+    let idleTimer
+    const wake = () => {
+      setAwake(true)
+      clearTimeout(idleTimer)
+      idleTimer = setTimeout(() => setAwake(false), 600)
+    }
+    const onPointer = (event) => {
+      if (event.pointerType === 'mouse') wake()
+    }
+    wake()
+    window.addEventListener('pointermove', onPointer, { passive: true })
+    return () => {
+      clearTimeout(idleTimer)
+      window.removeEventListener('pointermove', onPointer)
+    }
+  }, [active, expression])
+  return active || awake
+}
+
 // Frameloop for a <Canvas ref={ref}>: renders only while on screen, and pauses during scrolling.
 // `observe: false` is for canvases fixed to the screen, which are always in view.
 export function useFrameloop(ref, { pauseOnScroll = true, observe = true, continuous = true } = {}) {
