@@ -1,9 +1,10 @@
+import { RobotEnvironment } from './StudioEnvironment'
 import SceneRuntime from './SceneRuntime'
 import { memo, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { ContactShadows, Environment, Float, Lightformer } from '@react-three/drei'
+import { ContactShadows, Float } from '@react-three/drei'
 import * as THREE from 'three'
-import { useFrameloop } from '../hooks'
+import { useFrameloop, useRobotActivity } from '../hooks'
 
 const ACCENT = '#d4ff3a'
 
@@ -160,22 +161,17 @@ function HoverPad() {
   )
 }
 
-function RobotScene({ talking, excited }) {
+function RobotScene({ talking, excited, active = false }) {
   const ref = useRef()
-  const frameloop = useFrameloop(ref)
+  const animated = useRobotActivity(active || talking, excited)
+  const frameloop = useFrameloop(ref, { continuous: animated })
   return (
-    <Canvas ref={ref} frameloop={frameloop} camera={{ position: [0, 0.1, 3.7], fov: 38 }} dpr={[1, 1.5]} gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}>
+    <Canvas ref={ref} frameloop={frameloop} resize={{ scroll: false }} camera={{ position: [0, 0.1, 3.7], fov: 38 }} dpr={[1, 1.5]} gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}>
       <SceneRuntime name="robot" />
       <ambientLight intensity={0.7} />
       <directionalLight position={[2, 3, 4]} intensity={1.8} />
       {/* Studio reflections built from light panels: no HDR file to download. */}
-      <Environment resolution={128} frames={1}>
-        <Lightformer intensity={2.2} position={[0, 4, 3]} scale={[6, 1.2, 1]} />
-        <Lightformer intensity={1.2} position={[-4, 1, 2]} rotation-y={Math.PI / 2} scale={[4, 3, 1]} />
-        <Lightformer intensity={0.5} color={ACCENT} position={[4, -1, 1]} rotation-y={-Math.PI / 2} scale={[3, 2, 1]} />
-        <Lightformer intensity={1.6} position={[2, 2, 5]} scale={[3, 3, 1]} />
-        <Lightformer intensity={0.6} position={[0, -3, -4]} scale={[8, 4, 1]} />
-      </Environment>
+      <RobotEnvironment />
       <Float speed={2.2} rotationIntensity={0.25} floatIntensity={0.9} floatingRange={[-0.08, 0.08]}>
         <group scale={excited ? 1.06 : 1}>
           <Orb talking={talking} happy={excited} />

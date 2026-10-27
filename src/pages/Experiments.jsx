@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { experiments, profile } from '../data'
 import { useReveal } from '../hooks'
 import { PageHead } from '../components/SectionHead'
-import { ExperimentStage, SceneCanvas } from '../components/ExperimentScenes'
+import { ExperimentStage } from '../components/ExperimentScenes'
 
 const CAPTIONS = {
   Sonia: 'Parse → Rank → Answer',
@@ -108,7 +108,6 @@ export default function Experiments() {
       <a className="btn btn-ghost more" href={`${profile.github}?tab=repositories`} target="_blank" rel="noreferrer">
         Everything else on GitHub ↗
       </a>
-      <SceneCanvas />
     </div>
   )
 }
