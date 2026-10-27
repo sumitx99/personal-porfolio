@@ -4,6 +4,7 @@ import Lenis from 'lenis'
 import 'lenis/dist/lenis.css'
 import { profile } from '../data'
 import ChatBot from './ChatBot'
+import { useIsSmall } from '../hooks'
 
 const talkHref = profile.booking || `mailto:${profile.email}?subject=${encodeURIComponent('Let’s have a talk')}`
 
@@ -20,19 +21,28 @@ const NAV = [
 // Eased wheel scrolling on desktop (touch keeps the phone's own native scrolling).
 let lenis = null
 function SmoothScroll() {
+  const small = useIsSmall()
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    lenis = new Lenis({ lerp: 0.11, smoothWheel: true })
+    if (small || !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const scroller = new Lenis({ lerp: 0.11, smoothWheel: true })
+    lenis = scroller
+    let disposed = false
     let id = requestAnimationFrame(function raf(t) {
-      lenis.raf(t)
+      if (disposed) return
+      scroller.raf(t)
       id = requestAnimationFrame(raf)
     })
     return () => {
+      disposed = true
       cancelAnimationFrame(id)
-      lenis.destroy()
-      lenis = null
+      // Reset scrolling before destruction so a pending native-velocity timer
+      // cannot re-add Lenis classes after switching to the mobile breakpoint.
+      scroller.stop()
+      scroller.destroy()
+      if (lenis === scroller) lenis = null
     }
-  }, [])
+  }, [small])
   return null
 }
 

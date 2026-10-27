@@ -1,7 +1,8 @@
+import { CarEnvironment } from './StudioEnvironment'
 import SceneRuntime from './SceneRuntime'
 import { memo, Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Environment, Html, Lightformer, useGLTF, useProgress } from '@react-three/drei'
+import { Html, useGLTF, useProgress } from '@react-three/drei'
 import * as THREE from 'three'
 import { makeRaceRig } from './carRig'
 import { attachWheelSpin } from '../race/wheels'
@@ -236,6 +237,7 @@ function MarinaScene({ engine, cameraMode = 'chase', small = false, speed = 1 })
   return (
     <Canvas
       camera={initialCamera}
+      resize={{ scroll: false }}
       dpr={[1, 1.5]}
       gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
     >
@@ -246,13 +248,7 @@ function MarinaScene({ engine, cameraMode = 'chase', small = false, speed = 1 })
       <hemisphereLight args={['#bfcaf0', '#14110e', 0.7]} />
       <directionalLight position={[400, 900, 300]} intensity={0.7} color="#ffe8c4" />
       {/* reflections: the same studio strips as the garage, so the paint and carbon look the same out here */}
-      <Environment resolution={512} frames={1} environmentIntensity={1}>
-        <Lightformer form="rect" intensity={4} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[8, 2.5, 1]} />
-        <Lightformer form="rect" intensity={2.4} position={[-7, 2.2, 0]} rotation-y={Math.PI / 2} scale={[12, 4, 1]} />
-        <Lightformer form="rect" intensity={1.4} color="#dfe6ff" position={[12, 9, 0]} rotation-y={-Math.PI / 2} scale={[30, 2, 1]} />
-        <Lightformer form="rect" intensity={0.6} position={[0, 2, -12]} scale={[14, 2, 1]} />
-        <Lightformer form="rect" intensity={0.6} position={[0, 2, 12]} rotation-y={Math.PI} scale={[14, 2, 1]} />
-      </Environment>
+      <CarEnvironment />
       <Floodlight engine={engine} />
       <Suspense fallback={<Loader />}>
         <Circuit />

@@ -206,6 +206,7 @@ function HeroScene({ small }) {
     <Canvas
       ref={ref}
       frameloop={frameloop}
+      resize={{ scroll: false }}
       camera={{ position: [0, 0, 8], fov: 45 }}
       dpr={[1, 1.5]}
       gl={{ antialias: true, powerPreference: 'high-performance', alpha: true }}

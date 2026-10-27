@@ -1,7 +1,8 @@
+import { CarEnvironment } from './StudioEnvironment'
 import SceneRuntime from './SceneRuntime'
 import { memo, Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Environment, Html, Lightformer, OrbitControls, useGLTF, useProgress } from '@react-three/drei'
+import { Html, OrbitControls, useGLTF, useProgress } from '@react-three/drei'
 import * as THREE from 'three'
 import { COMPOUNDS, PIT_TIMELINE as T } from '../f1'
 import PitCrew from './PitCrew'
@@ -261,7 +262,7 @@ function F1Garage({ team, compound, paint, pitStart, onPitDone, onWheelSwap, aut
   const canvas = useRef()
   const frameloop = useFrameloop(canvas, { continuous: autoRotate || pitStart != null || compound === 'wet' || pitCam })
   return (
-    <Canvas ref={canvas} frameloop={frameloop} shadows dpr={[1, 1.5]} camera={{ position: [5.2, 1.9, 4.2], fov: 34 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
+    <Canvas ref={canvas} frameloop={frameloop} resize={{ scroll: false }} shadows dpr={[1, 1.5]} camera={{ position: [5.2, 1.9, 4.2], fov: 34 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
       <SceneRuntime name="garage" />
       <TouchScroll />
       <ClockBridge clockRef={clockRef} />
@@ -276,13 +277,7 @@ function F1Garage({ team, compound, paint, pitStart, onPitDone, onWheelSwap, aut
       <spotLight position={[0, 9, 0]} angle={0.5} penumbra={0.9} intensity={120} />
       {/* Night-race lighting for reflections: the gantry LEDs overhead, the bright garage mouth on one
           side and the floodlights over the pit wall on the other. */}
-      <Environment resolution={512} frames={1}>
-        <Lightformer form="rect" intensity={4} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[8, 2.5, 1]} />
-        <Lightformer form="rect" intensity={2.4} position={[-7, 2.2, 0]} rotation-y={Math.PI / 2} scale={[12, 4, 1]} />
-        <Lightformer form="rect" intensity={1.4} color="#dfe6ff" position={[12, 9, 0]} rotation-y={-Math.PI / 2} scale={[30, 2, 1]} />
-        <Lightformer form="rect" intensity={0.6} position={[0, 2, -12]} scale={[14, 2, 1]} />
-        <Lightformer form="rect" intensity={0.6} position={[0, 2, 12]} rotation-y={Math.PI} scale={[14, 2, 1]} />
-      </Environment>
+      <CarEnvironment />
 
       <Suspense fallback={<Loader />}>
         <PitLane team={team} wet={compound === 'wet'} pitStart={pitStart} />

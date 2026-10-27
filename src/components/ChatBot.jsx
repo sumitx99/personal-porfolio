@@ -183,12 +183,12 @@ export default function ChatBot() {
         <button
           className="bot-robot"
           onClick={() => setOpen((o) => !o)}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
+          onPointerEnter={(event) => event.pointerType === 'mouse' && setHover(true)}
+          onPointerLeave={() => setHover(false)}
           aria-label={open ? 'Close chat' : 'Open chat with Sumit’s assistant'}
         >
           <Suspense fallback={<span className="bot-fallback">◎</span>}>
-            <RobotScene talking={busy} excited={hover || teaser} />
+            <RobotScene talking={busy} excited={hover || teaser} active={open || hover || busy} />
           </Suspense>
         </button>
         {!open && (
