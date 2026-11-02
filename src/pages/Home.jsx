@@ -4,6 +4,7 @@ import { profile, roles, experience, education, projects, skills, experiments, c
 import { useIsSmall, useReveal } from '../hooks'
 import SectionHead from '../components/SectionHead'
 import ProjectShowcase from '../components/ProjectShowcase'
+import ProfilePortrait from '../components/ProfilePortrait'
 
 const HeroScene = lazy(() => import('../components/HeroScene'))
 
@@ -85,12 +86,7 @@ function About() {
     <section id="about" className="section">
       <SectionHead index="01" title="About" />
       <div className="about-grid">
-        <figure className="portrait reveal">
-          <img src="/profile.jpg" alt="Portrait of Sumit Kumar Ranjan" loading="lazy" width="1200" height="800" />
-          <figcaption>
-            <span className="dot" /> {profile.location}
-          </figcaption>
-        </figure>
+        <ProfilePortrait />
         <div className="about-copy reveal">
           <p className="lead">
             I’m a Computer Science (AI&nbsp;&amp;&nbsp;ML) engineer who likes the moment a model stops being a notebook and starts being
