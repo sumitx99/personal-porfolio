@@ -53,7 +53,7 @@ export const education = [
   },
 ]
 
-// Shipped, deployed products — the only two shown on the home page.
+// Shipped, deployed products shown on the home page.
 export const projects = [
   {
     name: 'RideBridge',
@@ -71,7 +71,7 @@ export const projects = [
     images: ['/projects/ridebridge-1.jpg', '/projects/ridebridge-2.jpg'],
     live: 'https://ride-bridge-phi.vercel.app/',
     repo: 'https://github.com/sumitx99/RideBridge',
-    accent: '#ef6c47',
+    accent: '#f3643cff',
   },
   {
     name: 'Kite',
@@ -90,18 +90,28 @@ export const projects = [
     live: 'https://kite-frontend-1u77.onrender.com/',
     accent: '#3b5bdb',
   },
+  {
+    name: 'Sonia AI',
+    kind: 'AI Agent · Research',
+    year: '2026',
+    tagline: 'Ask. Research. Create.',
+    blurb:
+      'An AI workspace that combines document-grounded answers with live web research and MCP-connected tools. Ask questions across your sources, then turn the results into tables, generated images and graphs in one conversation.',
+    highlights: [
+      'RAG over uploaded documents, with answers grounded in your sources',
+      'MCP tool integrations and web search for research beyond your files',
+      'Generate tables, images and graphs directly in the conversation',
+    ],
+    stack: ['AI Agents', 'MCP', 'RAG', 'Web Search'],
+    images: ['/projects/sonia-1.png', '/projects/sonia-2.png'],
+    live: 'https://sonia-ai-murp.vercel.app/',
+    repo: 'https://github.com/sumitx99/SONIA-AI',
+    accent: '#ee4033ff',
+  },
 ]
 
 // Side builds and explorations — the Experiments page.
 export const experiments = [
-  {
-    name: 'Sonia',
-    kind: 'RAG · LLM',
-    blurb:
-      'A RAG chatbot built to fix slow ingestion and vague answers: batch embeddings, LlamaParse layout-aware parsing and two-stage retrieval (vector top-25 → cross-encoder top-5).',
-    stack: ['FastAPI', 'Next.js', 'Gemini', 'LlamaParse'],
-    repo: 'https://github.com/sumitx99/SONIA-AI',
-  },
   {
     name: 'AI SQL Assistant',
     kind: 'NL → SQL',
@@ -173,7 +183,7 @@ export const experiments = [
 ]
 
 export const skills = {
-  'AI / ML': ['PyTorch', 'TensorFlow', 'Keras', 'scikit-learn', 'LangChain', 'RAG', 'YOLOv8', 'OpenCV'],
+  'AI / ML': ['PyTorch', 'TensorFlow', 'Keras', 'scikit-learn', 'LangChain', 'RAG', 'MCP', 'YOLOv8', 'OpenCV'],
   Backend: ['FastAPI', 'Flask', 'Kafka', 'Microservices', 'REST APIs'],
   Frontend: ['React', 'Next.js', 'TypeScript', 'Tailwind', 'Three.js'],
   'Data & Cloud': ['PostgreSQL', 'MySQL', 'AWS', 'Azure', 'Linux', 'Git'],
