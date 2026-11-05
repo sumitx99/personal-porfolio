@@ -96,7 +96,7 @@ export function localAnswer(question) {
       .join('\n')}\n\nHe also has ${experiments.length} experiments (RAG bots, text-to-SQL, pose tracking…) on /experiments.`
 
   if (has(q, 'who', 'about', 'yourself', 'sumit', 'introduce'))
-    return `${profile.name} is a ${profile.role.toLowerCase()} from ${profile.location}. He’s a Software Engineer at Pharmaco Evidence (backend, APIs, Kafka), previously built AI modules at EOXS, and ships products like RideBridge and Kite.`
+    return `${profile.name} is a ${profile.role.toLowerCase()} from ${profile.location}. He’s a Software Engineer at Pharmaco Evidence (backend, APIs, Kafka), previously built AI modules at EOXS, and ships products like RideBridge, Kite and Sonia AI.`
 
   if (has(q, 'resume', 'cv'))
     return `You can ask Sumit for his latest resume at ${profile.email}, or see the full picture on LinkedIn: ${profile.linkedin}`
