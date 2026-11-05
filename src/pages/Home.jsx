@@ -78,7 +78,7 @@ function Hero({ small }) {
 function About() {
   const stats = [
     ['2', 'engineering roles'],
-    ['2', 'products live'],
+    [projects.length, 'products live'],
     [certificationCounts.certifications, 'certifications'],
     ['1st', 'runner-up, BIZINNOVATHON'],
   ]
@@ -98,7 +98,7 @@ function About() {
             industry.
           </p>
           <p>
-            On the side I ship products like RideBridge and Kite, and experiment with RAG, text-to-SQL and computer vision. Off the
+            On the side I ship products like RideBridge, Kite and Sonia AI, and experiment with RAG, text-to-SQL and computer vision. Off the
             keyboard: cricket, basketball and travel.
           </p>
           <div className="stats">

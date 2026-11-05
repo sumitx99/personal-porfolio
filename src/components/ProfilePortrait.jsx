@@ -131,7 +131,7 @@ export default function ProfilePortrait() {
               <dl className="profile-facts">
                 {facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
               </dl>
-              <p className="profile-note">On the side, I build RideBridge and Kite, and explore RAG, text-to-SQL and computer vision.</p>
+              <p className="profile-note">On the side, I build RideBridge, Kite and Sonia AI, and explore RAG, text-to-SQL and computer vision.</p>
               <div className="profile-links">
                 <a href={profile.resume} download>Resume <span aria-hidden="true">↓</span></a>
                 <a href={profile.github} target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>

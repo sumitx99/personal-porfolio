@@ -5,7 +5,6 @@ import { PageHead } from '../components/SectionHead'
 import { ExperimentStage } from '../components/ExperimentScenes'
 
 const CAPTIONS = {
-  Sonia: 'Parse → Rank → Answer',
   'AI SQL Assistant': 'Talk to your database',
   Postura: 'Form: 98%',
   'Claim AI Assistant': 'SQL + RAG',
@@ -18,7 +17,7 @@ const CAPTIONS = {
 }
 
 const AREAS = {
-  'LLM & RAG': ['Sonia', 'AI SQL Assistant', 'Claim AI Assistant', 'ATS Resume Checker', 'YouTube → Notes', 'J.A.R.V.I.S'],
+  'LLM & RAG': ['AI SQL Assistant', 'Claim AI Assistant', 'ATS Resume Checker', 'YouTube → Notes', 'J.A.R.V.I.S'],
   'Computer Vision': ['Postura', 'IntelliTraffic'],
   'ML & Data': ['Market Predictor', 'Drug Review Sentiment'],
 }
