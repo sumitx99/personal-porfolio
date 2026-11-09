@@ -321,7 +321,12 @@ function Contact() {
       <div className="contact-card reveal">
         <p className="lead">Have a role, a project or a half-formed idea? My inbox is open.</p>
         <div className="contact-row">
-          <a className="btn" href={`mailto:${profile.email}`}>
+          <a
+            className="btn"
+            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(profile.email)}&su=${encodeURIComponent('Let’s talk')}`}
+            target="_blank"
+            rel="noreferrer"
+          >
             Email me <span aria-hidden="true">→</span>
           </a>
           <button className="btn btn-ghost" onClick={copy}>
