@@ -306,6 +306,16 @@ function Skills() {
 
 function Contact() {
   const [copied, setCopied] = useState(false)
+  const [emailModalOpen, setEmailModalOpen] = useState(false)
+  const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(profile.email)}&su=${encodeURIComponent('Let’s talk')}`
+  useEffect(() => {
+    if (!emailModalOpen) return undefined
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setEmailModalOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [emailModalOpen])
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(profile.email)
@@ -321,14 +331,9 @@ function Contact() {
       <div className="contact-card reveal">
         <p className="lead">Have a role, a project or a half-formed idea? My inbox is open.</p>
         <div className="contact-row">
-          <a
-            className="btn"
-            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(profile.email)}&su=${encodeURIComponent('Let’s talk')}`}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <button className="btn" type="button" onClick={() => setEmailModalOpen(true)}>
             Email me <span aria-hidden="true">→</span>
-          </a>
+          </button>
           <button className="btn btn-ghost" onClick={copy}>
             {copied ? 'Copied ✓' : profile.email}
           </button>
@@ -345,6 +350,28 @@ function Contact() {
           </a>
         </div>
       </div>
+      {emailModalOpen && (
+        <div className="email-modal-backdrop" onClick={() => setEmailModalOpen(false)}>
+          <section
+            className="email-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="email-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button className="email-modal-close" type="button" aria-label="Close dialog" onClick={() => setEmailModalOpen(false)}>×</button>
+            <p className="eyebrow">Get in touch</p>
+            <h2 id="email-modal-title">Let’s start a conversation</h2>
+            <p>Your email will be addressed to:</p>
+            <p className="email-modal-address">{profile.email}</p>
+            <p className="email-modal-note">Gmail opens separately to compose your message.</p>
+            <div className="email-modal-actions">
+              <a className="btn" href={gmailComposeUrl} target="_blank" rel="noreferrer">Open Gmail <span aria-hidden="true">↗</span></a>
+              <button className="btn btn-ghost" type="button" onClick={() => setEmailModalOpen(false)}>Cancel</button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   )
 }
