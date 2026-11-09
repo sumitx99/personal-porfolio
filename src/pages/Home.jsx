@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { profile, roles, experience, education, projects, skills, experiments, certificationCounts, coding } from '../data'
+import { profile, roles, experience, careerChapters, education, projects, skills, experiments, certificationCounts, coding } from '../data'
 import { useIsSmall, useReveal } from '../hooks'
 import SectionHead from '../components/SectionHead'
 import ProjectShowcase from '../components/ProjectShowcase'
@@ -124,21 +124,41 @@ function Work() {
           <article className="job reveal" key={job.company}>
             <div className="job-meta">
               <span className="period">{job.period}</span>
-              <h3>{job.company}</h3>
-              <p className="muted">{job.title}</p>
+              <h3>
+                {job.url ? (
+                  <a href={job.url} target="_blank" rel="noreferrer" className="job-link">
+                    {job.company} <span aria-hidden="true">↗</span>
+                  </a>
+                ) : (
+                  job.company
+                )}
+              </h3>
+              {job.place && <p className="muted">{job.place}</p>}
+              {job.url && (
+                <a href={job.url} target="_blank" rel="noreferrer" className="job-site">
+                  {job.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')} ↗
+                </a>
+              )}
+              {job.current && <span className="job-now">Currently here</span>}
             </div>
-            <div>
-              <ul>
-                {job.points.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
-              <div className="chips">
-                {job.tags.map((t) => (
-                  <span key={t}>{t}</span>
-                ))}
-              </div>
-            </div>
+            <ol className="chapters">
+              {job.chapters.map((ch) => (
+                <li className="chapter" key={ch.slug}>
+                  <span className="chapter-no">CH {String(careerChapters.findIndex((c) => c.slug === ch.slug) + 1).padStart(2, '0')}</span>
+                  <div className="chapter-title">
+                    <strong>{ch.title}</strong>
+                    <span className="chapter-sub">
+                      {ch.period}
+                      {ch.badge && <em>{ch.badge}</em>}
+                    </span>
+                    <p className="chapter-summary">{ch.summary}</p>
+                    <Link to={`/experience/${ch.slug}`} className="chapter-read">
+                      Read the chapter <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </article>
         ))}
       </div>
