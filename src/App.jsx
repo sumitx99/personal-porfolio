@@ -6,8 +6,10 @@ import Certifications from './pages/Certifications'
 import Analytics from './pages/Analytics'
 import Coding from './pages/Coding'
 
-// Experiments carries the 3D card scenes, so it loads on demand.
+// The workbench and its lab notes load on demand.
 const Experiments = lazy(() => import('./pages/Experiments'))
+const ExperimentDetail = lazy(() => import('./pages/ExperimentDetail'))
+const CaseStudy = lazy(() => import('./pages/CaseStudy'))
 const Garage = lazy(() => import('./pages/Garage'))
 
 export default function App() {
@@ -23,6 +25,8 @@ export default function App() {
             </Suspense>
           }
         />
+        <Route path="experiments/:slug" element={<Suspense fallback={<div className="page" />}><ExperimentDetail /></Suspense>} />
+        <Route path="projects/:slug" element={<Suspense fallback={<div className="page" />}><CaseStudy /></Suspense>} />
         <Route path="certifications" element={<Certifications />} />
         <Route path="coding" element={<Coding />} />
         <Route path="analytics" element={<Analytics />} />

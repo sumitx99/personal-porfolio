@@ -1034,12 +1034,22 @@ h1 .line + .line {
 }
 
 .browser {
+  position: relative;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--line);
   background: #1a1a1d;
   box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
   transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.browser-link {
+  display: block;
+}
+
+.browser-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .showcase-media:hover .browser {
@@ -1575,6 +1585,7 @@ h1 .line + .line {
 }
 
 .coding-pc {
+  position: relative;
   min-width: 0;
   overflow: hidden;
   height: clamp(320px, 34vw, 440px);
@@ -1584,6 +1595,17 @@ h1 .line + .line {
 
 .coding-pc:active {
   cursor: grabbing;
+}
+
+/* drifting code and a lime glow behind the desk (CodeBackdrop); the 3D canvas paints over it */
+.code-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 62% 70% at 55% 50%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 62% 70% at 55% 50%, #000 40%, transparent 100%);
 }
 
 .pc-loading {
