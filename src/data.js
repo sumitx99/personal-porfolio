@@ -15,28 +15,150 @@ export const profile = {
 
 export const roles = ['RAG systems', 'LLM apps', 'backend services', 'computer vision', 'full-stack products']
 
-export const experience = [
+// Each job is told in chapters (newest first); every chapter has its own page at
+// /experience/:slug. `points` mirror `work` so the chatbot and About card keep working.
+const pharmacoChapters = [
   {
-    company: 'Pharmaco Evidence',
-    title: 'Software Engineer',
-    period: 'Aug 2025 — Present',
-    points: [
-      'Building backend services and API integrations for AI-driven evidence products.',
-      'Working with event streaming on Apache Kafka and microservices in FastAPI.',
+    slug: 'pharmacoevidence-sde',
+    title: 'Software Development Engineer I',
+    period: 'Jul 2026 — Present',
+    summary: 'Agent infrastructure, regulatory reporting and model tuning for HEOR teams.',
+    work: [
+      {
+        head: 'Scheduling multi-agent runs',
+        body: 'Pooled execution and a first-come-first-served scheduler that weighs how often each agent runs, for multi-agent AI on Kafka.',
+        flow: ['Agent jobs', 'Kafka', 'FCFS + frequency', 'Worker pool'],
+        uses: ['Kafka', 'Multi-agent', 'FastAPI'],
+      },
+      {
+        head: 'Regulatory reports, generated',
+        body: 'A pipeline that writes HTA dossier Word reports in several countries’ formats — LLMs map headings and link every citation to its source.',
+        flow: ['Evidence', 'LLM heading map', 'Citation linking', 'Word dossier'],
+        uses: ['Multi-agent', 'FastAPI'],
+      },
+      {
+        head: 'Every LLM call, visible',
+        body: 'LangSmith tracing across the agent and RAG systems, so each call, retrieval step and agent run can be inspected.',
+        flow: ['Agent run', 'Retrieval', 'LLM call', 'LangSmith trace'],
+        uses: ['LangSmith', 'Multi-agent'],
+      },
+      {
+        head: 'A model that writes like HEOR',
+        body: 'Fine-tuned Gemma 4 on HEOR/HTA writing with QLoRA on AWS SageMaker.',
+        flow: ['HEOR/HTA text', 'QLoRA', 'SageMaker', 'Gemma 4'],
+        uses: ['QLoRA', 'SageMaker'],
+      },
     ],
-    tags: ['FastAPI', 'Kafka', 'APIs', 'PostgreSQL'],
+    tags: ['Kafka', 'Multi-agent', 'LangSmith', 'QLoRA', 'SageMaker', 'FastAPI'],
   },
   {
-    company: 'EOXS',
-    title: 'AI Generalist Intern',
-    period: 'May 2025 — Aug 2025',
-    points: [
-      'Built AI modules inside the EOXS ERP for automation and predictive analytics.',
-      'Designed ML models for demand forecasting and operational efficiency in the steel industry.',
+    slug: 'pharmacoevidence-intern',
+    title: 'SDE Intern',
+    period: 'Aug 2025 — Jun 2026',
+    badge: '11 months · converted to full-time',
+    summary: 'AI tools for health economics, HTA reports and systematic literature reviews.',
+    work: [
+      {
+        head: 'Health economic models from data',
+        body: 'Extracts health-state transitions, utilities and patient characteristics, then builds Markov, decision-tree and hybrid models into one Excel HE model.',
+        flow: ['Clinical data', 'Parameter extraction', 'Markov · tree · hybrid', 'Excel HE model'],
+        uses: ['Python', 'RAG'],
+      },
+      {
+        head: 'HTA reports on autopilot',
+        body: 'An HTA tool that drafts HTA reports and Global Value Dossiers (GVDs) automatically.',
+        flow: ['Evidence', 'LLM drafting', 'HTA report', 'GVD'],
+        uses: ['Python', 'RAG'],
+      },
+      {
+        head: 'Literature reviews, end to end',
+        body: 'SLR platform features: AI and dual human screening of abstracts and full texts, conflict resolution, QC and de-duplication.',
+        flow: ['De-duplication', 'AI + dual screening', 'Conflict resolution', 'QC'],
+        uses: ['Python'],
+      },
+      {
+        head: 'Grounded answers from papers',
+        body: 'RAG with LlamaIndex, Docling and AWS Bedrock, plus a PubMed-connected literature Q&A that reasons step by step.',
+        flow: ['PubMed + PDFs', 'Docling', 'LlamaIndex', 'Bedrock answer'],
+        uses: ['LlamaIndex', 'Docling', 'AWS Bedrock', 'RAG'],
+      },
+      {
+        head: 'First fine-tune',
+        body: 'LLaMA 7B adapted to HEOR data with LoRA and QLoRA adapters.',
+        flow: ['HEOR data', 'LoRA / QLoRA', 'LLaMA 7B'],
+        uses: ['LoRA', 'Python'],
+      },
     ],
-    tags: ['Machine Learning', 'Forecasting', 'ERP', 'Python'],
+    tags: ['LlamaIndex', 'AWS Bedrock', 'Docling', 'RAG', 'LoRA', 'Python'],
   },
 ]
+
+const eoxsChapters = [
+  {
+    slug: 'eoxs',
+    title: 'AI Generalist Intern',
+    period: 'May 2025 — Aug 2025',
+    summary: 'Pricing and automation tools around a steel-industry ERP.',
+    work: [
+      {
+        head: 'Price comparator',
+        body: 'A tool that matches the same goods across sources and compares their prices side by side.',
+        flow: ['Sources', 'Match goods', 'Compare prices'],
+        uses: ['Python'],
+        repos: [{ label: 'eoxs-comparator', href: 'https://github.com/sumitx99/eoxs-comparator' }],
+      },
+      {
+        head: 'Prompting on autopilot',
+        body: 'Playwright and Selenium automation that types prompts into ChatGPT, Gemini and Perplexity and collects the answers.',
+        flow: ['Prompt list', 'Playwright / Selenium', 'ChatGPT · Gemini · Perplexity', 'Answers'],
+        uses: ['Python', 'Playwright', 'Selenium'],
+        repos: [
+          { label: 'Perplexity version', href: 'https://github.com/sumitx99/LLM_Infiltration_perplexity' },
+          { label: 'Gemini version', href: 'https://github.com/sumitx99/LLM_infiltration_gemini' },
+        ],
+      },
+      {
+        head: 'Forecasting in the ERP',
+        body: 'ML models for demand forecasting inside the EOXS ERP.',
+        flow: ['ERP history', 'ML model', 'Demand forecast'],
+        uses: ['Python', 'Forecasting'],
+      },
+    ],
+    links: [
+      { label: 'Price comparator', href: 'https://github.com/sumitx99/eoxs-comparator' },
+      { label: 'Perplexity automation', href: 'https://github.com/sumitx99/LLM_Infiltration_perplexity' },
+      { label: 'Gemini automation', href: 'https://github.com/sumitx99/LLM_infiltration_gemini' },
+    ],
+    tags: ['Python', 'Playwright', 'Selenium', 'Forecasting'],
+  },
+]
+
+const withLatest = (job) => {
+  const chapters = job.chapters.map((c) => ({ ...c, points: c.work.map((w) => w.body) }))
+  return { ...job, chapters, title: chapters[0].title, points: chapters[0].points, tags: chapters[0].tags }
+}
+
+export const experience = [
+  withLatest({
+    company: 'Pharmacoevidence',
+    url: 'https://www.pharmacoevidence.com/',
+    place: 'Chandigarh, India',
+    period: 'Aug 2025 — Present',
+    current: true,
+    chapters: pharmacoChapters,
+  }),
+  withLatest({
+    company: 'EOXS',
+    url: 'https://eoxs.com/',
+    period: 'May 2025 — Aug 2025',
+    chapters: eoxsChapters,
+  }),
+]
+
+// Every chapter in reading order (oldest first), with its company attached.
+export const careerChapters = experience
+  .flatMap((job) => job.chapters.map((c) => ({ ...c, job })))
+  .reverse()
 
 export const education = [
   {
