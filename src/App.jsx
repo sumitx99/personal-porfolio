@@ -11,6 +11,7 @@ const Experiments = lazy(() => import('./pages/Experiments'))
 const ExperimentDetail = lazy(() => import('./pages/ExperimentDetail'))
 const CaseStudy = lazy(() => import('./pages/CaseStudy'))
 const Garage = lazy(() => import('./pages/Garage'))
+const Chapter = lazy(() => import('./pages/Chapter'))
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
         />
         <Route path="experiments/:slug" element={<Suspense fallback={<div className="page" />}><ExperimentDetail /></Suspense>} />
         <Route path="projects/:slug" element={<Suspense fallback={<div className="page" />}><CaseStudy /></Suspense>} />
+        <Route path="experience/:slug" element={<Suspense fallback={<div className="page" />}><Chapter /></Suspense>} />
         <Route path="certifications" element={<Certifications />} />
         <Route path="coding" element={<Coding />} />
         <Route path="analytics" element={<Analytics />} />

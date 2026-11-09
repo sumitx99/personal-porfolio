@@ -59,7 +59,7 @@ export function localAnswer(question) {
     return `The best way to reach Sumit is email: ${profile.email}. You can also find him on LinkedIn (${profile.linkedin}) and GitHub (${profile.github}).`
 
   if (has(q, 'experience', 'work', 'job', 'company', 'intern', 'pharmaco', 'eoxs', 'career'))
-    return experience.map((j) => `**${j.title} · ${j.company}** (${j.period})\n${j.points.join(' ')}`).join('\n\n')
+    return experience.flatMap((j) => j.chapters.map((c) => `**${c.title} · ${j.company}** (${c.period})\n${c.points.join(' ')}`)).join('\n\n')
 
   if (has(q, 'leetcode', 'dsa', 'coding', 'competitive', 'codeforces', 'codechef', 'problem', 'solved', 'gfg', 'geeks', 'codolio'))
     return `Sumit has solved **${coding.totals[0][0]}** problems across ${coding.platforms.length} platforms:\n${coding.platforms
@@ -96,7 +96,7 @@ export function localAnswer(question) {
       .join('\n')}\n\nHe also has ${experiments.length} experiments (RAG bots, text-to-SQL, pose tracking…) on /experiments.`
 
   if (has(q, 'who', 'about', 'yourself', 'sumit', 'introduce'))
-    return `${profile.name} is a ${profile.role.toLowerCase()} from ${profile.location}. He’s a Software Engineer at Pharmaco Evidence (backend, APIs, Kafka), previously built AI modules at EOXS, and ships products like RideBridge, Kite and Sonia AI.`
+    return `${profile.name} is a ${profile.role.toLowerCase()} from ${profile.location}. He’s a Software Development Engineer at Pharmacoevidence (multi-agent AI on Kafka, RAG, HTA/HEOR tooling), previously built AI modules at EOXS, and ships products like RideBridge, Kite and Sonia AI.`
 
   if (has(q, 'resume', 'cv'))
     return `You can ask Sumit for his latest resume at ${profile.email}, or see the full picture on LinkedIn: ${profile.linkedin}`
