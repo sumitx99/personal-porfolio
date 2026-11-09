@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { coding } from '../data'
 import { useIsSmall, useReveal } from '../hooks'
 import { PageHead } from '../components/SectionHead'
+import CodeBackdrop from '../components/CodeBackdrop'
 import { useCodolio } from '../codolio'
 
 const DesktopPC = lazy(() => import('../components/DesktopPC'))
@@ -265,6 +266,7 @@ export default function Coding() {
           }
         />
         <div className="coding-pc" aria-label="3D model of a gaming desk setup, drag to rotate">
+          <CodeBackdrop />
           <Suspense fallback={null}>
             <DesktopPC small={small} />
           </Suspense>

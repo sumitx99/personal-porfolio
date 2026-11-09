@@ -1,112 +1,34 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { experiments, profile } from '../data'
-import { useReveal } from '../hooks'
-import { PageHead } from '../components/SectionHead'
-import { ExperimentStage } from '../components/ExperimentScenes'
-
-const CAPTIONS = {
-  'AI SQL Assistant': 'Talk to your database',
-  Postura: 'Form: 98%',
-  'Claim AI Assistant': 'SQL + RAG',
-  'Market Predictor': 'Random forest',
-  'J.A.R.V.I.S': 'Listen → Think → Speak',
-  IntelliTraffic: 'YOLOv8 · live',
-  'ATS Resume Checker': '87% match',
-  'YouTube → Notes': 'Watch less · learn more',
-  'Drug Review Sentiment': 'Reviews → sentiment',
-}
-
-const AREAS = {
-  'LLM & RAG': ['AI SQL Assistant', 'Claim AI Assistant', 'ATS Resume Checker', 'YouTube → Notes', 'J.A.R.V.I.S'],
-  'Computer Vision': ['Postura', 'IntelliTraffic'],
-  'ML & Data': ['Market Predictor', 'Drug Review Sentiment'],
-}
+import { experimentStories, experimentSlug } from '../experimentStories'
+import ExperimentVisual, { ExperimentGlyph } from '../components/ExperimentVisual'
+import './Experiments.css'
 
 export default function Experiments() {
-  const groups = ['All', ...Object.keys(AREAS)]
+  useEffect(() => {
+    const previous = document.title
+    document.title = 'Experiments — The workbench · Sumit Kumar Ranjan'
+    return () => { document.title = previous }
+  }, [])
   const [filter, setFilter] = useState('All')
-  const [q, setQ] = useState('')
+  const [query, setQuery] = useState('')
+  const groups = ['All', 'LLM & RAG', 'Computer Vision', 'ML & Data']
+  const list = useMemo(() => experiments.filter((e) => {
+    const story = experimentStories[experimentSlug(e)]
+    return (filter === 'All' || story.category === filter) && [e.name, e.kind, e.blurb, ...e.stack].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+  }), [filter, query])
 
-  const list = useMemo(() => {
-    const needle = q.trim().toLowerCase()
-    return experiments.filter(
-      (e) =>
-        (filter === 'All' || AREAS[filter].includes(e.name)) &&
-        (!needle || [e.name, e.kind, e.blurb, ...e.stack].join(' ').toLowerCase().includes(needle))
-    )
-  }, [filter, q])
-
-  useReveal([filter, q])
-
-  return (
-    <div className="page">
-      <PageHead
-        eyebrow="Side quests & happy accidents"
-        title="Experiments"
-        intro="Things I built to learn something — RAG pipelines, text-to-SQL, pose tracking, forecasting. Some polished, some held together with tape."
-      />
-
-      <label className="search">
-        <span aria-hidden="true">⌕</span>
-        <input type="search" placeholder="Search projects, topics or tools…" value={q} onChange={(e) => setQ(e.target.value)} />
-      </label>
-
-      <div className="filters" role="tablist" aria-label="Filter experiments">
-        {groups.map((g) => (
-          <button key={g} role="tab" aria-selected={filter === g} className={filter === g ? 'active' : ''} onClick={() => setFilter(g)}>
-            {g}
-          </button>
-        ))}
-      </div>
-      <p className="found">
-        {list.length} {list.length === 1 ? 'project' : 'projects'}
-      </p>
-
-      <div className="certx-grid">
-        {list.map((e) => {
-          const href = e.live || e.repo
-          return (
-            <article className="certx expx reveal" key={e.name}>
-              <div className="certx-tab">
-                <span className="dot" /> {e.kind}
-              </div>
-              <a className="certx-frame" href={href} target="_blank" rel="noreferrer" tabIndex={-1}>
-                <ExperimentStage name={e.name} />
-                <span className="stage-caption">{CAPTIONS[e.name]}</span>
-                <span className="certx-zoom">{e.live ? 'Open live ↗' : 'View code ↗'}</span>
-              </a>
-              <h3>
-                <a href={href} target="_blank" rel="noreferrer">
-                  {e.name} <span aria-hidden="true">↗</span>
-                </a>
-              </h3>
-              <p className="muted">{e.blurb}</p>
-              <div className="chips">
-                {e.stack.map((s) => (
-                  <span key={s}>{s}</span>
-                ))}
-              </div>
-              <div className="project-links expx-links">
-                {e.live && (
-                  <a href={e.live} target="_blank" rel="noreferrer">
-                    Live ↗
-                  </a>
-                )}
-                {e.repo && (
-                  <a href={e.repo} target="_blank" rel="noreferrer">
-                    Code ↗
-                  </a>
-                )}
-              </div>
-            </article>
-          )
-        })}
-      </div>
-      {list.length === 0 && <p className="notice">Nothing matches “{q}”. Try “RAG”, “vision” or “Gemini”.</p>}
-
-      <a className="btn btn-ghost more" href={`${profile.github}?tab=repositories`} target="_blank" rel="noreferrer">
-        Everything else on GitHub ↗
-      </a>
-    </div>
-  )
+  return <div className="lab-page">
+    <header className="lab-header"><div className="lab-kicker"><span className="lab-status" /> THE WORKBENCH <span>09 EXPLORATIONS</span></div><h1>Small builds.<br /><span>Big questions.</span></h1><div className="lab-header-bottom"><p>A place to follow a question all the way to working code. Language, vision, data—and the things I learned by connecting them.</p><span className="lab-header-mark" aria-hidden="true">↙</span></div></header>
+    <div className="lab-toolbar"><div className="lab-filters" aria-label="Filter experiments">{groups.map((group) => <button type="button" key={group} aria-pressed={filter === group} onClick={() => setFilter(group)}>{group}{group === 'All' && <span>{experiments.length}</span>}</button>)}</div><label className="lab-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search experiments" placeholder="Find a question or tool…" value={query} onChange={(event) => setQuery(event.target.value)} /></label></div>
+    <div className="lab-results" role="status">{String(list.length).padStart(2, '0')} {list.length === 1 ? 'EXPERIMENT' : 'EXPERIMENTS'}<span>OPEN A BUILD TO GO DEEPER ↙</span></div>
+    <div className="lab-grid">{list.map((experiment) => {
+      const slug = experimentSlug(experiment)
+      const story = experimentStories[slug]
+      return <Link to={`/experiments/${slug}`} className="lab-card" key={slug}><div className="lab-card-art"><ExperimentVisual type={story.visual} compact /><span className="lab-card-index">EXP. {String(experiments.indexOf(experiment) + 1).padStart(2, '0')}</span><span className="lab-card-open" aria-hidden="true">↗</span></div><div className="lab-card-body"><span className="lab-card-kind"><ExperimentGlyph type={story.visual} />{experiment.kind}</span><h2>{experiment.name}</h2><p>{story.question}</p><div className="lab-card-stack">{experiment.stack.slice(0, 3).map((tech) => <span key={tech}>{tech}</span>)}</div><div className="lab-card-footer"><span>Read the lab notes</span><span aria-hidden="true">→</span></div></div></Link>
+    })}</div>
+    {!list.length && <div className="lab-empty"><h2>No builds in this corner yet.</h2><p>Try another tool or topic, or clear your filters.</p><button type="button" onClick={() => { setFilter('All'); setQuery('') }}>Show all experiments ↗</button></div>}
+    <footer className="lab-bottom"><p>More questions. More code.</p><a href={`${profile.github}?tab=repositories`} target="_blank" rel="noreferrer">Explore the full GitHub archive ↗</a></footer>
+  </div>
 }

@@ -5,6 +5,16 @@ R=Path('/Users/sk/PORTFOLIO/artifacts/williams');SIDE='left';SIGN=1;SIZE=4096
 s=bpy.context.scene
 names=['Object_12','Object_4','Object_6','Object_7','Object_8']
 objects=[bpy.data.objects[n] for n in names]
+# The two sides share the final UV layer. Joining/unwrapping temporary meshes
+# must not change coordinates already approved on the opposite side.
+right_uv={}
+for o in objects:
+    layer=o.data.uv_layers.get('FW48_BodyBakeUV')
+    if layer:
+        right_uv[o.name]=[(li,tuple(layer.data[li].uv))
+            for poly in o.data.polygons
+            if o.data.materials[poly.material_index].get('FW48_side')=='right'
+            for li in poly.loop_indices]
 for o in objects:
     for key in ('FW48_PaintUV','FW48_right_BakeUV'):
         old=o.data.uv_layers.get(key)
@@ -121,4 +131,8 @@ def bake(kind):
     return im
 for kind in ('color','position','normal'):bake(kind)
 bpy.data.objects.remove(temp,do_unlink=True)
+for o in objects:
+    layer=o.data.uv_layers.get('FW48_BodyBakeUV')
+    for li,coordinate in right_uv.get(o.name,[]):layer.data[li].uv=coordinate
+    o.data.update()
 result={'side':SIDE,'faces':{n:len(v) for n,v in chosen.items()},'images':['FW48 bake '+SIDE+' '+k for k in ('color','position','normal')]}
