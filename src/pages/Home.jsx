@@ -161,10 +161,10 @@ function Work() {
 function Projects() {
   return (
     <section id="projects" className="section">
-      <SectionHead index="03" title="Shipped projects" kicker="Live in production — click through and try them." />
+      <SectionHead index="03" title="Shipped projects" kicker="Behind each product: the problem, the decisions, and the build." />
       <div className="showcases">
-        {projects.map((p, i) => (
-          <ProjectShowcase key={p.name} project={p} index={i} />
+        {projects.map((project, index) => (
+          <ProjectShowcase key={project.name} project={project} index={index} />
         ))}
       </div>
     </section>
