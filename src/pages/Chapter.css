@@ -4,7 +4,7 @@
   --ch-soft: rgba(212, 255, 58, 0.08);
   max-width: 1160px;
   margin: 0 auto;
-  padding: 116px var(--gutter) 90px;
+  padding: 116px var(--gutter) 24px;
 }
 
 .ch-kicker {
@@ -388,7 +388,7 @@
 
 /* Explorer */
 .ch-explore {
-  padding: clamp(56px, 9vw, 104px) 0 clamp(48px, 7vw, 80px);
+  padding: clamp(56px, 9vw, 104px) 0 clamp(40px, 5vw, 56px);
 }
 
 .ch-explore-head {
@@ -449,13 +449,26 @@
   display: grid;
   grid-template-columns: minmax(260px, 380px) 1fr;
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
+}
+
+.ch-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
 .ch-tabs {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+/* Build cards share the column's height so nothing is left empty above the stepper. */
+.ch-tabs button {
+  flex: 1;
 }
 
 .ch-tabs button {
@@ -465,9 +478,9 @@
   align-items: center;
   gap: 10px;
   padding: 16px 18px;
-  border: 1px solid transparent;
+  border: 1px solid var(--line);
   border-radius: 16px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.015);
   color: var(--muted);
   font: 600 15px/1.35 var(--body);
   text-align: left;
@@ -496,7 +509,7 @@
 .ch-tabs button.is-active {
   color: var(--text);
   background: var(--bg-2);
-  border-color: var(--line);
+  border-color: rgba(212, 255, 58, 0.35);
 }
 
 .ch-tabs button.is-active::before {
@@ -510,6 +523,81 @@
 .ch-tabs button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.ch-tab-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ch-tab-name small {
+  font: 500 11px/1.3 var(--mono);
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+/* Build stepper under the list */
+.ch-stepper {
+  margin-top: auto;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg-2);
+}
+
+.ch-stepper-bar {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.ch-stepper-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: 0 50%;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ch-stepper-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  font: 500 12px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ch-stepper-row i {
+  font-style: normal;
+  color: var(--muted);
+}
+
+.ch-stepper-row div {
+  display: flex;
+  gap: 8px;
+}
+
+.ch-stepper-row button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.ch-stepper-row button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .ch-tab-no {
@@ -532,6 +620,20 @@
 .ch-tabs button:hover .ch-tab-arrow {
   opacity: 1;
   transform: none;
+}
+
+/* Every panel sits in the same cell, so the area keeps the tallest panel's height. */
+.ch-stack {
+  display: grid;
+}
+
+.ch-stack > .ch-panel {
+  grid-area: 1 / 1;
+}
+
+.ch-panel:not(.is-on) {
+  visibility: hidden;
+  animation: none;
 }
 
 .ch-panel {
@@ -737,7 +839,8 @@
 /* Prev / next */
 .ch-foot {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 16px;
 }
 
@@ -803,10 +906,6 @@
   transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.25s;
 }
 
-.ch-next-next {
-  grid-column: 2;
-}
-
 .ch-next:hover {
   border-color: rgba(212, 255, 58, 0.4);
   transform: translateY(-2px);
@@ -853,6 +952,7 @@
 
   .ch-tabs button {
     flex: 0 0 auto;
+    align-items: start;
     grid-template-columns: auto auto;
     max-width: 240px;
     border-color: var(--line);
@@ -928,11 +1028,7 @@
   }
 
   .ch-foot {
-    grid-template-columns: 1fr;
-  }
-
-  .ch-next-next {
-    grid-column: auto;
+    grid-auto-flow: row;
   }
 }
 
@@ -947,4 +1043,9 @@
   .ch-flow-pulse {
     display: none;
   }
+}
+
+/* The chapter page ends with its own cards, so the site footer can sit closer. */
+main:has(.ch-page) ~ .site-footer {
+  margin-top: 48px;
 }
