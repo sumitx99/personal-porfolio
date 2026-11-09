@@ -93,9 +93,7 @@ for name,g,z,w,h in specs:
     a=rgba[:,3:4];C[ids]=C[ids]*(1-a)+rgb*a
     report.append({'logo':name,'pixels':int((a>.5).sum()),'normal':[round(f,3) for f in n],'center':[round(f,3) for f in center]})
 
-# A previously packed image can retain stale bytes after pixel edits. Build a
-# fresh datablock and repoint the materials so reopening uses this exact bake.
-im=bpy.data.images.new('FW48 Body '+SIDE+' final',4096,4096,alpha=False,float_buffer=True)
+im=bpy.data.images.get('FW48 Body '+SIDE+' final') or bpy.data.images.new('FW48 Body '+SIDE+' final',4096,4096,alpha=False,float_buffer=True)
 im.colorspace_settings.name='Linear Rec.709'
 result_pixels=np.ones((4096,4096,4),np.float32);result_pixels[:,:,:3]=0;result_pixels[ys,xs,:3]=C
 im.pixels.foreach_set(result_pixels.ravel());im.update();im.file_format='PNG';im.filepath_raw=str(T/('body-'+SIDE+'-final-baked.png'));im.save();im.pack()
@@ -114,11 +112,6 @@ for mat in bpy.data.materials:
     tex=nt.nodes.get('FW48 final color') or nt.nodes.new('ShaderNodeTexImage');tex.name='FW48 final color';tex.image=im
     uv=nt.nodes.new('ShaderNodeUVMap');uv.uv_map='FW48_BodyBakeUV';nt.links.new(uv.outputs['UV'],tex.inputs['Vector']);nt.links.new(tex.outputs['Color'],bs.inputs['Base Color'])
     bs.inputs['Specular IOR Level'].default_value=.05
-    # The source paint has a perfectly glossy clearcoat. It survives the base
-    # roughness change and puts white streaks across the baked sponsor artwork.
-    if 'williams_paint' in mat.get('FW48_original',''):
-        bs.inputs['Coat Weight'].default_value=.12
-        bs.inputs['Coat Roughness'].default_value=.28
     for nd in nt.nodes:
         if nd.type=='NORMAL_MAP':nd.uv_map='UVMap'
     for l in list(bs.inputs['Normal'].links):nt.links.remove(l)
