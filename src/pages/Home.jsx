@@ -124,15 +124,7 @@ function Work() {
           <article className="job reveal" key={job.company}>
             <div className="job-meta">
               <span className="period">{job.period}</span>
-              <h3>
-                {job.url ? (
-                  <a href={job.url} target="_blank" rel="noreferrer" className="job-link">
-                    {job.company} <span aria-hidden="true">↗</span>
-                  </a>
-                ) : (
-                  job.company
-                )}
-              </h3>
+              <h3>{job.company}</h3>
               {job.place && <p className="muted">{job.place}</p>}
               {job.url && (
                 <a href={job.url} target="_blank" rel="noreferrer" className="job-site">
