@@ -150,6 +150,7 @@ export const experience = [
   withLatest({
     company: 'EOXS',
     url: 'https://eoxs.com/',
+    place: 'Remote',
     period: 'May 2025 — Aug 2025',
     chapters: eoxsChapters,
   }),
