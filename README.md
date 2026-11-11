@@ -1,6 +1,10 @@
 # Sumit Kumar Ranjan — Portfolio
 
-React + Vite site with a Three.js (React Three Fiber) hero.
+Sumit Kumar Ranjan's personal portfolio, featuring software engineering and AI/ML projects, professional experience, certifications, and coding achievements.
+
+Visit the portfolio: [sk-world-mu.vercel.app](https://sk-world-mu.vercel.app/).
+
+Built with React, Vite, and Three.js (React Three Fiber).
 
 ```bash
 npm install
@@ -30,7 +34,7 @@ Three small endpoints back the site. Their code lives in `server/` and only uses
 
 | Endpoint | Handler | What it does | Needs |
 |---|---|---|---|
-| `POST /api/chat` | `server/chat.js` | Chat robot answers with Claude (`claude-opus-5-5`) | `ANTHROPIC_API_KEY` (optional: without it the robot answers from `src/bot/knowledge.js`) |
+| `POST /api/chat` | `server/chat.js` | Answers questions about the portfolio | `ANTHROPIC_API_KEY` (optional; local portfolio answers are available without it) |
 | `GET/POST /api/visits` | `server/visits.js` | Visitor and page-view counter on Analytics | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (optional: without them it counts in memory and resets) |
 | `GET /api/codolio` | `server/codolio.js` | Live Coding page, awards and contribution graph from Codolio, cached 6 h | nothing |
 
