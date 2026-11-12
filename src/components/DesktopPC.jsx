@@ -1,6 +1,7 @@
 import SceneRuntime from './SceneRuntime'
 import { memo, Suspense, useMemo, useRef } from 'react'
-import { TouchScroll, useFrameloop } from '../hooks'
+import { useFrameloop } from '../hooks'
+import { TouchScroll } from '../three/TouchScroll'
 import { Canvas } from '@react-three/fiber'
 import { Html, OrbitControls, Preload, useGLTF, useProgress } from '@react-three/drei'
 import StaticBatch from './StaticBatch'
