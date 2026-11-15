@@ -1,0 +1,53 @@
+{"sources":
+    {
+        "music": {
+            "motif": {"src": "audio/music/music-motif-theme-1.ogg"},
+            "stormAtmosExt": {"src": "audio/music/the-boat-petty-opening-tempest-ext-storm.ogg"},
+            "piratePiano": {"src": "audio/music/hes-a-pirate-piano.mp3"},
+            "stormAtmosInt": {"src": "audio/music/the-boat-petty-opening-storm-below-decks-sequence.ogg"},
+            "boatAtmosExt": {"src": "audio/music/on-the-deck-after-storm.ogg"},
+            "gardenAtmos": {"src": "audio/music/garden-loop.ogg"},
+            "hospitalAtmos": {"src": "audio/music/hospital-room-traffic-outside.ogg"},
+            "busStationAtmos": {"src": "audio/music/bus-station-v2.ogg"},
+            "marketsAtmos": {"src": "audio/music/rach-gia-markets-v2.ogg"},
+            "rowingAtmos": {"src": "audio/music/canoe-row-out-minus-spot-fx.ogg"},
+            "gunfireAtmos": {"src": "audio/music/p43-viet-cong-gunfire-m30bursts.ogg"},
+            "eerieRecollection": {"src": "audio/music/music-idea-2-eerie-recollection-of-another-time.ogg"},
+            "hook": {"src": "audio/music/swinging-hook-on-crane.ogg"},
+            "belowDeck": {"src": "audio/music/mais-fevertruong-elementsboat-rvrb.ogg"},
+            "moodDesperate": {"src": "audio/music/mood-dark-desperate.ogg"},
+            "quyenTensionMusic": {"src": "audio/music/tension-music-for-quyen-v2-simpler.ogg"},
+            "landAtmosExt": {"src": "audio/music/on-the-deckseabirds.ogg"},
+            "funeralAtmos": {"src": "audio/music/funeral-march-no-splash.ogg"},
+            "song": {"src": "audio/music/boat-haunting-singing-for-ch6-and-or-end.ogg"},
+            "song2": {"src": "audio/music/song-2.ogg"},
+            "boatCreaking": {"src": "audio/music/boat-swaying-creaking.ogg"}
+		},
+        "sfx": {
+            "chapterMotif": {"src": "audio/sfx/chapter-music-v4-5-1.ogg"},
+            "thunder01": {"src": "audio/sfx/opening-element-thunder-1-norm-01-01.ogg"},
+            "thunder02": {"src": "audio/sfx/opening-element-thunder-2-norm-01-01.ogg"},
+            "thunder03": {"src": "audio/sfx/thunder-3-norm.ogg"},
+            "thunder04": {"src": "audio/sfx/thunder-4-norm.ogg"},
+            "thunder05": {"src": "audio/sfx/opening-element-thunder-5-norm-01.ogg"},
+            "crash01": {"src": "audio/sfx/clatter-1-normalised.ogg"},
+            "crash02": {"src": "audio/sfx/clatter-2-normalised.ogg"},
+            "crash03": {"src": "audio/sfx/clatter-3-normalised.ogg"},
+            "crash04": {"src": "audio/sfx/clatter-4-normalised.ogg"},
+            "match": {"src": "audio/sfx/match-light-stylised.ogg"},
+            "whisper": {"src": "audio/sfx/whispering-vox.ogg"},
+            "shh": {"src": "audio/sfx/shhh-canoe.ogg"},
+            "signalAccent": {"src": "audio/sfx/signal-new.ogg"},
+            "bodySplash01": {"src": "audio/sfx/p65-girls-body-overboard.ogg"},
+            "bodySplash02": {"src": "audio/sfx/p49-bundled-body-overboard.ogg"},
+            "grind": {"src": "audio/sfx/grind-short.ogg"},
+            "engine": {"src": "audio/sfx/engine-cut.ogg"},
+            "punch": {"src": "audio/sfx/p71-water-bottle-dropping-v2-with-hit.ogg"},
+            "hatch": {"src": "audio/sfx/quyens-hatch.ogg"},
+            "wail": {"src": "audio/sfx/mother-wail-1.ogg"},
+            "birds": {"src": "audio/sfx/seabirds-fly-over.ogg"},
+            "busDrive": {"src": "audio/sfx/bus-ext-drive-away.ogg"},
+            "cough": {"src": "audio/sfx/mai-coff-splutter-v2-use-this-pls-matt.ogg"}
+        }
+    }
+}

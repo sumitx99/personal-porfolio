@@ -119,6 +119,7 @@ function Work() {
   return (
     <section id="work" className="section">
       <SectionHead index="02" title="Experience" kicker="Where I’ve shipped code." />
+      <a href="/journey/" className="btn btn-ghost" style={{ marginBottom: 32 }}>Follow the journey <span aria-hidden="true">↗</span></a>
       <div className="timeline">
         {experience.map((job) => (
           <article className="job reveal" key={job.company}>

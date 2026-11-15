@@ -1,3 +1,12 @@
 {
-  "rewrites": [{ "source": "/((?!api/|google6a67b5157486dff2\\.html$|sitemap\\.xml$|robots\\.txt$).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/journey",
+      "destination": "/journey/index.html"
+    },
+    {
+      "source": "/((?!api/|google6a67b5157486dff2\\.html$|sitemap\\.xml$|robots\\.txt$).*)",
+      "destination": "/index.html"
+    }
+  ]
 }

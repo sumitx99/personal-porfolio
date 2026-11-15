@@ -1,0 +1,332 @@
+:root {
+  color-scheme: dark;
+  --portfolio-black: #0a0a0b;
+  --portfolio-grey: #8a8f98;
+  --portfolio-light: #ecebe6;
+  --portfolio-lime: #d4ff3a;
+}
+
+body {
+  background-color: var(--portfolio-black) !important;
+  color: var(--portfolio-light);
+}
+
+#sbs-footer {
+  background-color: #121214 !important;
+  color: var(--portfolio-grey) !important;
+  border-top: 1px solid rgb(212 255 58 / 22%);
+}
+
+#sbs-footer a,
+#footer-container .settings input[type='checkbox']:checked + label,
+#footer-container .settings label:hover {
+  color: var(--portfolio-lime) !important;
+}
+
+#sbs-footer a:hover {
+  color: var(--portfolio-light) !important;
+}
+
+#chapter-nav ul li a:hover,
+#chapter-nav ul li a.selected {
+  filter: drop-shadow(0 0 0.38rem rgb(212 255 58 / 70%));
+}
+
+#footer-container .settings label:focus-visible,
+#sbs-footer a:focus-visible {
+  outline: 2px solid var(--portfolio-lime) !important;
+  outline-offset: 4px;
+}
+
+/* Share buttons are switched off in scripts/main.js; keep the box hidden as well. */
+#social-container { display: none !important; }
+
+body:not(:has(.sr-start:not(.is-leaving))) #journey-header .header {
+  background: var(--portfolio-black);
+  border-color: var(--line);
+}
+
+body:has(.sr-start:not(.is-leaving)) #journey-header:not(:has(.nav-mobile.open)) .logo {
+  color: #18191a;
+}
+
+.journey-portfolio-link {
+  position: absolute;
+  inset-block-start: calc(100% + 10px);
+  inset-inline-start: var(--gutter);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 44px;
+  min-height: 40px;
+  padding-inline: 10px;
+  border-radius: 6px;
+  font: 700 13px/1 var(--body);
+  color: var(--portfolio-light);
+  background: var(--portfolio-black);
+}
+
+.journey-portfolio-arrow { font-size: 16px; }
+.journey-portfolio-label { display: none; }
+.journey-portfolio-link[hidden] { display: none; }
+.journey-side-back { border: 1px solid var(--line); cursor: pointer; }
+.journey-side-back:hover { color: var(--portfolio-lime); }
+
+.journey-portfolio-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+body:has(.sr-start:not(.is-leaving)) .journey-portfolio-link {
+  position: fixed;
+  inset-block-start: auto;
+  inset-block-end: calc(7vh - 9px);
+  color: #17181a;
+  background: transparent;
+}
+
+body:has(.sr-start:not(.is-leaving)) .journey-portfolio-label { display: inline; }
+
+@media (max-width: 960px) {
+  #journey-header .header { gap: 12px; }
+  #journey-header:has(.nav-mobile.open) .journey-portfolio-link { visibility: hidden; }
+  #journey-header .nav-mobile { justify-content: safe center; }
+}
+
+@media (max-width: 640px) {
+  body:has(.sr-start:not(.is-leaving)) .journey-portfolio-link {
+    inset-block-end: calc(8px + env(safe-area-inset-bottom, 0px));
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* Journey footer: replaces the original end credits at the very bottom of the story. */
+.journey-end {
+  position: relative;
+  isolation: isolate;
+  --je-line: rgb(236 235 230 / 14%);
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 0 24px;
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: var(--portfolio-light);
+  text-align: center;
+}
+.journey-end a { pointer-events: auto; text-decoration: none; }
+.journey-end::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 -10% 0 0;
+  background: url('../images/013-021/song-pt1-bg-flowers-white-right.png') right bottom / min(65%, 860px) auto no-repeat;
+  opacity: .24;
+  pointer-events: none;
+}
+
+.je-kicker {
+  margin: 0 0 18px;
+  font: 22px/1 "Hand of Huynh Bold Italic", 'Manrope', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--portfolio-lime);
+}
+.je-title {
+  margin: 0 0 28px;
+  font: 700 120px/0.95 'Unbounded', system-ui, sans-serif;
+  letter-spacing: -0.04em;
+  color: var(--portfolio-light);
+}
+.je-lede {
+  max-width: 900px;
+  margin: 0 auto 80px;
+  font-size: 24px;
+  line-height: 1.55;
+  color: #c9cbd0;
+}
+.je-chapters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin: 0 0 72px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+.je-chapters a {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 32px 32px 34px;
+  border-radius: 22px;
+  background: rgb(18 18 20 / 72%);
+  box-shadow: 0 0 0 1px var(--je-line), 0 24px 50px -30px rgb(0 0 0 / 80%);
+  color: var(--portfolio-light);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+}
+.je-chapters a:hover { transform: translateY(-4px); box-shadow: 0 0 0 1px rgb(212 255 58 / 55%), 0 24px 50px -24px rgb(0 0 0 / 90%); }
+/* The hand-lettered font has no 1 or 2, so chapter numbers use the portfolio display face. */
+.je-num {
+  font: 700 28px/1 'Unbounded', system-ui, sans-serif;
+  letter-spacing: -0.03em;
+  color: var(--portfolio-grey);
+}
+.je-chapters .is-now .je-num { color: var(--portfolio-lime); }
+.je-when { font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--portfolio-grey); }
+.je-chapters strong { font: 700 26px/1.25 'Unbounded', system-ui, sans-serif; letter-spacing: -0.02em; }
+.je-chapters em { font-style: normal; font-size: 16px; color: #b9bcc3; }
+.je-chapters .is-now em { color: var(--portfolio-lime); }
+.je-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin: 0 0 110px;
+}
+.je-btn {
+  padding: 16px 26px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--portfolio-light) !important;
+  box-shadow: 0 0 0 1px var(--je-line);
+  background: rgb(18 18 20 / 60%);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.je-btn:hover { background: rgb(236 235 230 / 10%); }
+.je-btn-primary { background: var(--portfolio-lime); color: var(--portfolio-black) !important; box-shadow: none; }
+.je-btn-primary:hover { background: var(--portfolio-light); }
+.je-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 28px;
+  padding: 28px 0 0;
+  border-top: 1px solid var(--je-line);
+  text-align: left;
+}
+.je-logo { font: 700 30px/1 'Unbounded', system-ui, sans-serif; letter-spacing: -0.04em; color: var(--portfolio-light) !important; }
+.je-logo span { color: var(--portfolio-lime); }
+.je-social { display: flex; gap: 6px; }
+.je-social a { padding: 8px 14px; border-radius: 999px; font-size: 16px; color: #b9bcc3 !important; }
+.je-social a:hover { color: var(--portfolio-lime) !important; background: rgb(236 235 230 / 6%); }
+.je-note { flex-basis: 100%; margin: 0; font-size: 14px; line-height: 1.5; color: var(--portfolio-grey); }
+.journey-end a:focus-visible { outline: 2px solid var(--portfolio-lime); outline-offset: 3px; }
+
+/* Hover states for footer links, set by the click bridge in index.html (the scroll layer swallows :hover). */
+.je-chapters a.is-hover { transform: translateY(-4px); box-shadow: 0 0 0 1px rgb(212 255 58 / 55%), 0 24px 50px -24px rgb(0 0 0 / 90%); }
+.je-btn.is-hover { background: rgb(236 235 230 / 10%); }
+.je-btn-primary.is-hover { background: var(--portfolio-light); }
+.je-social a.is-hover { color: var(--portfolio-lime) !important; background: rgb(236 235 230 / 6%); }
+
+/* Skip button: jumps past the story to the journey footer, and back to the start from there. */
+.pf-skip {
+  position: fixed;
+  right: 18px;
+  bottom: 22px;
+  z-index: 2100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 999px;
+  font: 600 14px/1 'Manrope', system-ui, sans-serif;
+  color: var(--portfolio-light);
+  background: rgb(10 10 11 / 62%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 0 0 1px rgb(236 235 230 / 16%), 0 10px 28px rgb(0 0 0 / 35%);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.pf-skip[hidden] { display: none; }
+.pf-skip b { color: var(--portfolio-lime); font-weight: 700; transition: transform 0.2s ease; }
+.pf-skip:hover { color: var(--portfolio-black); background: var(--portfolio-lime); box-shadow: none; }
+.pf-skip:hover b { color: var(--portfolio-black); transform: translateY(2px); }
+.pf-skip:focus-visible { outline: 2px solid var(--portfolio-lime); outline-offset: 3px; }
+
+/* The story has three chapters, so the side nav strip is cut to fit three numbers instead of six. */
+#chapter-nav-container { height: 280px; margin-top: -140px; }
+#chapter-nav { background-size: 36px 280px; }
+
+/* Skip / back-to-start: a round arrow button that sits above the pixel cat's path. */
+.pf-skip {
+  right: 18px;
+  bottom: 92px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+}
+.pf-skip span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.pf-skip b { font-size: 20px; line-height: 1; }
+
+/* Sound / Auto scroll / Full screen: stacked on the left, above the cat's path. */
+#footer-container .settings {
+  position: fixed;
+  left: 14px;
+  bottom: 92px;
+  top: auto;
+  float: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 0;
+}
+#footer-container .settings input[type='checkbox'] + label { margin: 0; }
+
+@media (max-width: 768px) {
+  .pf-skip { right: 14px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); width: 46px; height: 46px; }
+  #footer-container .settings { display: none; }
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  /* The comic camera scales this panel down to the phone's width. */
+  .journey-end { padding-bottom: 260px; }
+  .je-kicker { font-size: 48px; }
+  .je-title { margin-bottom: 40px; }
+  .je-lede { margin-bottom: 65px; font-size: 52px; line-height: 1.4; }
+  .je-chapters { grid-template-columns: 1fr; gap: 30px; margin-bottom: 64px; }
+  .je-chapters a {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px 34px;
+    padding: 38px;
+  }
+  .je-num { grid-row: span 3; font-size: 56px; }
+  .je-when, .je-chapters em { font-size: 43px; }
+  .je-chapters strong { font-size: 56px; }
+  .je-actions { gap: 20px; margin-bottom: 54px; }
+  .je-btn { padding: 32px 38px; font-size: 48px; }
+  .je-foot { gap: 24px; }
+  .je-logo { font-size: 65px; }
+  .je-social { flex-wrap: wrap; gap: 16px; }
+  .je-social a { padding: 24px 18px; font-size: 44px; }
+  .je-note { font-size: 42px; }
+}
+
+/* Chapter numbers: no box of any kind (the browser's blue focus ring included). */
+#chapter-nav ul li a,
+#chapter-nav ul li a:focus,
+#chapter-nav ul li a:focus-visible,
+#chapter-nav ul li a:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  -webkit-tap-highlight-color: transparent;
+}
