@@ -1,0 +1,215 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta charset="utf-8">
+    <base href="/journey/">
+    <title>Follow My Journey · Sumit Kumar Ranjan</title>
+    <meta name="description" content="Follow the journey of Sumit Kumar Ranjan, Software Engineer in AI/ML, told as an interactive scrolling story.">
+    <meta name="author" content="Sumit Kumar Ranjan">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230a0a0b'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-family='Arial' font-weight='700' font-size='28' fill='%23d4ff3a'%3Esk%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@600;700;800&family=Pinyon+Script&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/vendor.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/portfolio-theme.css">
+    <link rel="stylesheet" href="styles/pixel-cat.css">
+    <link rel="stylesheet" href="styles/start-relief.css">
+    <link rel="stylesheet" href="/portfolio-header.css">
+    <link rel="stylesheet" href="/booking/booking.css">
+    <script src="/booking/booking.js" defer></script>
+</head>
+
+<body>
+
+
+<div id="journey-header">
+    <header class="header">
+        <a class="logo" href="/" aria-label="Home">sk<span>.</span></a>
+        <nav class="nav-desktop" aria-label="Portfolio">
+            <a href="/#about">About</a>
+            <a href="/#work">Work</a>
+            <a href="/experiments">Experiments</a>
+            <a href="/coding">Coding</a>
+            <a href="/certifications">Certifications</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/garage">Garage</a>
+        </nav>
+        <a class="btn btn-small talk-btn" href="https://cal.com/skranjan/30min?overlayCalendar=true" target="_blank" rel="noreferrer" data-booking data-booking-title="Let’s talk" aria-label="Let’s talk">
+            <i class="talk-dot" aria-hidden="true"></i>
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <rect x="3.5" y="5" width="17" height="15" rx="3"></rect>
+                <path d="M3.5 10h17M8 3v4M16 3v4"></path>
+            </svg>
+            <b class="talk-label">Let’s talk</b>
+        </a>
+        <button class="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="journey-mobile-nav">
+            <span></span><span></span>
+        </button>
+        <a class="journey-portfolio-link" href="/#work" aria-label="Return to portfolio">
+            <span class="journey-portfolio-arrow" aria-hidden="true">←</span>
+            <span class="journey-portfolio-label">Portfolio</span>
+        </a>
+        <button class="journey-portfolio-link journey-side-back" type="button" hidden>
+            <span class="journey-portfolio-arrow" aria-hidden="true">←</span>
+            <span>Back to story</span>
+        </button>
+    </header>
+    <nav class="nav-mobile" id="journey-mobile-nav" aria-label="Portfolio" inert>
+        <a href="/#about"><small>01</small>About</a>
+        <a href="/#work"><small>02</small>Work</a>
+        <a href="/experiments"><small>03</small>Experiments</a>
+        <a href="/coding"><small>04</small>Coding</a>
+        <a href="/certifications"><small>05</small>Certifications</a>
+        <a href="/analytics"><small>06</small>Analytics</a>
+        <a href="/garage"><small>07</small>Garage</a>
+        <a class="btn nav-mobile-cta" href="https://cal.com/skranjan/30min?overlayCalendar=true" target="_blank" rel="noreferrer" data-booking data-booking-title="Let’s talk">Let’s talk →</a>
+    </nav>
+</div>
+<button class="pf-skip" type="button" hidden><span>Skip to the end</span> <b aria-hidden="true">&darr;</b></button>
+
+<div id="app-container"></div>
+<div id="chapter-nav-container"></div>
+<div id="preloader-container"></div>
+<div id="footer-container"></div>
+<div id="social-container"></div>
+
+<script>
+    // Dock the portfolio header once the story (which scrolls inside its own container) moves off the top,
+    // and flip the skip button between "Skip to the end" and "Back to the start".
+    (function () {
+        var header = document.querySelector('#journey-header .header');
+        var burger = header.querySelector('.burger');
+        var menu = document.getElementById('journey-mobile-nav');
+        var skip = document.querySelector('.pf-skip');
+        var sideBack = header.querySelector('.journey-side-back');
+        var portfolioBack = header.querySelector('a.journey-portfolio-link');
+        var label = skip.querySelector('span');
+        var arrow = skip.querySelector('b');
+        var atEnd = false;
+        var sideStory = null;
+        function setMenu(open) {
+            burger.classList.toggle('open', open);
+            burger.setAttribute('aria-expanded', String(open));
+            menu.classList.toggle('open', open);
+            menu.inert = !open;
+        }
+        burger.addEventListener('click', function () { setMenu(menu.inert); });
+        menu.addEventListener('click', function (event) {
+            if (event.target.closest('a')) setMenu(false);
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape' || menu.inert || document.querySelector('dialog[open]')) return;
+            setMenu(false);
+            burger.focus();
+        });
+        window.matchMedia('(max-width: 960px)').addEventListener('change', function (event) {
+            if (!event.matches) setMenu(false);
+        });
+        function layer() { return document.getElementById('scroll-manager-container'); }
+        function sync(el) {
+            header.classList.toggle('scrolled', Boolean(sideStory) || el.scrollTop > 40);
+            skip.hidden = false;
+            atEnd = el.scrollHeight - el.clientHeight - el.scrollTop <= 2;
+            label.textContent = atEnd
+                ? (sideStory ? sideBack.textContent.trim().replace(/^←\s*/, '') : 'Back to the start')
+                : (sideStory ? 'Skip to the end of the side story' : 'Skip to the end');
+            arrow.textContent = atEnd ? (sideStory ? '←' : '↑') : '↓';
+        }
+        document.addEventListener('journey:side-story', function (event) {
+            sideStory = event.detail;
+            sideBack.lastElementChild.textContent = sideStory === 'bidong' ? 'Back to Chapter 3' : 'Back to story';
+            sideBack.hidden = !sideStory;
+            portfolioBack.hidden = Boolean(sideStory);
+            sync(layer());
+        });
+        document.addEventListener('scroll', function (event) {
+            if (event.target && event.target.id === 'scroll-manager-container') sync(event.target);
+        }, true);
+        // The story's scroll layer appears once "Click to start" is pressed.
+        var wait = setInterval(function () {
+            var el = layer();
+            if (el && el.scrollHeight > el.clientHeight) { clearInterval(wait); sync(el); }
+        }, 500);
+        skip.addEventListener('click', function () {
+            var el = layer();
+            if (!el) return;
+            if (atEnd && sideStory) sideBack.click();
+            else el.scrollTop = atEnd ? 0 : el.scrollHeight;
+        });
+    })();
+
+    // The story's invisible scroll layer sits on top of the artwork, so clicks never reach the footer links
+    // drawn underneath. Find the link under the pointer and follow it, keeping wheel/touch scrolling intact.
+    (function () {
+        var hovered = null;
+        function linkAt(x, y) {
+            var stack = document.elementsFromPoint(x, y);
+            for (var i = 0; i < stack.length; i++) {
+                var link = stack[i].closest && stack[i].closest('.journey-end a');
+                if (link) return link;
+            }
+            return null;
+        }
+        function onLayer(target) {
+            return target && target.closest && target.closest('#scroll-manager-outer-container');
+        }
+        document.addEventListener('click', function (event) {
+            if (!onLayer(event.target)) return;
+            var link = linkAt(event.clientX, event.clientY);
+            if (!link) return;
+            event.preventDefault();
+            event.stopPropagation();
+            link.click();
+        }, true);
+        document.addEventListener('mousemove', function (event) {
+            var link = onLayer(event.target) ? linkAt(event.clientX, event.clientY) : null;
+            if (link === hovered) return;
+            if (hovered) hovered.classList.remove('is-hover');
+            hovered = link;
+            if (hovered) hovered.classList.add('is-hover');
+            document.documentElement.style.cursor = hovered ? 'pointer' : '';
+            var layer = document.getElementById('scroll-manager-container');
+            if (layer) layer.style.cursor = hovered ? 'pointer' : '';
+        }, true);
+    })();
+</script>
+
+<section id="sr-start" class="sr-start is-loading" aria-labelledby="sr-title">
+    <canvas class="sr-canvas" aria-hidden="true"></canvas>
+    <div class="sr-cover">
+        <div class="sr-copy">
+            <p class="sr-author">Sumit Kumar Ranjan</p>
+            <h1 id="sr-title" class="sr-title">My journey</h1>
+            <p class="sr-subtitle">From automating steel orders to building AI tools for health research. An illustrated story in three chapters.</p>
+            <div class="sr-actions">
+                <button class="sr-enter" type="button" disabled>
+                    <span>Loading story…</span><b aria-hidden="true">→</b>
+                </button>
+                <p class="sr-audio">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="14" width="4.5" height="6.5" rx="1.6"/><rect x="17" y="14" width="4.5" height="6.5" rx="1.6"/></svg>
+                    <span>Best with headphones</span>
+                </p>
+            </div>
+        </div>
+        <ol class="sr-chapters" aria-label="Chapters">
+            <li><span>01</span><div><strong>Steel and software</strong><small>AI intern · EOXS</small></div></li>
+            <li><span>02</span><div><strong>Evidence and AI</strong><small>SDE intern · Pharmacoevidence</small></div></li>
+            <li><span>03</span><div><strong>Building AI systems</strong><small>SDE I · Pharmacoevidence</small></div></li>
+        </ol>
+    </div>
+</section>
+<script src="scripts/start-relief.js"></script>
+
+<script src="scripts/vendor/modernizr/modernizr.js"></script>
+<script src="scripts/vendor/detectizr/detectizr.js"></script>
+<script src="scripts/flightcheck.js"></script>
+
+<script src="scripts/main.js"></script>
+<script src="scripts/pixel-cat.js"></script>
+</body>
+</html>

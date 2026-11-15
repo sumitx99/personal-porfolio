@@ -1,0 +1,175 @@
+/* Pixel cat, journey page only. It walks a lane along the bottom, above the story's scroll layer. */
+.pc-root {
+    --pc-lane: 4px;
+    --pc-accent: #d4ff3a;
+    --pc-text: #ecebe6;
+    --pc-muted: #9a9ea6;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--pc-lane);
+    height: 0;
+    z-index: 10001;
+    pointer-events: none;
+    font-family: 'Manrope', system-ui, sans-serif;
+}
+
+.pc-cat {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: var(--pc-w);
+    height: var(--pc-h);
+    will-change: transform;
+}
+
+.pc-hit {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: none;
+    cursor: grab;
+    pointer-events: auto;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.pc-hit:active { cursor: grabbing; }
+.pc-hit:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 2px; border-radius: 8px; }
+
+.pc-canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    transform-origin: 50% 100%;
+}
+
+.pc-shadow {
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    width: 64px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(0 0 0 / 0.85), transparent);
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.pc-bowl {
+    position: absolute;
+    bottom: calc(var(--pc-foot, 9px) - 6px);
+    image-rendering: pixelated;
+    pointer-events: none;
+    transition: opacity 0.45s ease;
+}
+.pc-bowl[hidden] { display: none; }
+.pc-bowl.is-gone { opacity: 0; }
+
+/* Little labels above the head. */
+.pc-mrrp,
+.pc-heart,
+.pc-zzz {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    pointer-events: none;
+    line-height: 1;
+}
+.pc-mrrp {
+    transform: translateX(-50%);
+    font: 600 11px/1 ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color: var(--pc-muted);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.pc-mrrp.is-on { opacity: 1; }
+.pc-heart {
+    display: none;
+    color: #e0527a;
+    font-size: 15px;
+    transform: translateX(4px);
+}
+.pc-cat.is-happy .pc-heart { display: block; animation: pc-heart 0.9s ease-out infinite alternate; }
+@keyframes pc-heart {
+    from { transform: translate(4px, 2px) scale(0.9); }
+    to { transform: translate(4px, -3px) scale(1.06); }
+}
+.pc-zzz {
+    display: none;
+    top: 4px;
+    align-items: flex-end;
+    gap: 2px;
+    transform: translateX(14px);
+    font: 700 10px/1 ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color: var(--pc-muted);
+    text-shadow: 0 0 3px rgb(0 0 0 / 0.6);
+}
+.pc-cat.is-asleep .pc-zzz { display: flex; }
+.pc-zzz span { opacity: 0; animation: pc-z 2.4s ease-in-out infinite; }
+.pc-zzz span:nth-child(2) { font-size: 12px; animation-delay: 0.6s; }
+.pc-zzz span:nth-child(3) { font-size: 14px; animation-delay: 1.2s; }
+@keyframes pc-z {
+    0% { opacity: 0; transform: translateY(4px); }
+    30% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-9px); }
+}
+
+/* Speech bubble that rides along with the cat. */
+.pc-bubble {
+    position: absolute;
+    bottom: calc(100% + 2px);
+    width: max-content;
+    max-width: 240px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    background: linear-gradient(to bottom, rgb(255 255 255 / 0.07), transparent 40%), rgb(20 20 23 / 0.82);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 16px 36px rgb(0 0 0 / 0.45);
+    color: var(--pc-text);
+    font-size: 13px;
+    line-height: 1.45;
+    cursor: default;
+    pointer-events: auto;
+    animation: pc-bubble-in 0.22s cubic-bezier(.2, .8, .2, 1);
+}
+.pc-bubble[hidden] { display: none; }
+.pc-bubble[data-side="right"] { left: 18px; border-bottom-left-radius: 4px; }
+.pc-bubble[data-side="left"] { right: 18px; border-bottom-right-radius: 4px; }
+.pc-bubble p { margin: 0; }
+@keyframes pc-bubble-in { from { opacity: 0; transform: translateY(4px) scale(0.98); } }
+
+.pc-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pc-actions[hidden] { display: none; }
+.pc-actions button {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    background: transparent;
+    color: var(--pc-text);
+    font: 500 13px/1 'Manrope', system-ui, sans-serif;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+.pc-actions button:hover { background: rgb(255 255 255 / 0.08); }
+.pc-actions button:first-child { background: var(--pc-accent); border-color: var(--pc-accent); color: #0a0a0b; font-weight: 600; }
+.pc-actions button:first-child:hover { background: #c4ee2c; }
+.pc-actions button:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 2px; }
+
+/* Phones: the cat walks the very bottom edge; the round skip button sits above its path. */
+@media (max-width: 768px) {
+    .pc-root { --pc-lane: calc(4px + env(safe-area-inset-bottom, 0px)); --pc-foot: 6px; }
+    .pc-bubble { max-width: 220px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pc-bubble, .pc-zzz span, .pc-cat.is-happy .pc-heart { animation: none !important; }
+    .pc-zzz span { opacity: 1; }
+}
