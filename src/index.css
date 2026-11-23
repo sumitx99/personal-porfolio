@@ -645,6 +645,119 @@ h1 .line + .line {
   color: var(--muted);
 }
 
+/* The story's own storm artwork, in a small living preview. */
+.journey-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: min(100%, 360px);
+  min-height: 104px;
+  margin-bottom: 36px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 255, 58, .28);
+  border-radius: 14px;
+  background: #111314;
+  color: var(--text);
+  transition: border-color .25s ease, background .25s ease;
+}
+.journey-cta-label {
+  position: relative;
+  padding: 16px 18px 16px 8px;
+  font: 600 15px/1.5 var(--body);
+  white-space: nowrap;
+  transition: color .25s ease;
+}
+.journey-mini {
+  position: relative;
+  align-self: stretch;
+  flex: 0 0 156px;
+  min-height: 104px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #343c40 url('/journey/images/007-storm-arrived/bg-pot-02.jpg') center 40% / 260px auto;
+}
+.journey-mini::after {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 60%, #111314), linear-gradient(0deg, rgba(0,0,0,.3), transparent 45%);
+}
+.journey-mini-clouds {
+  position: absolute;
+  width: 220px;
+  max-width: none;
+  top: -36px;
+  left: -30px;
+  opacity: .6;
+  animation: journey-clouds 9s ease-in-out infinite alternate;
+}
+.journey-mini-boat {
+  position: absolute;
+  z-index: 2;
+  width: 122px;
+  max-width: none;
+  left: 12px;
+  bottom: 16px;
+  transform-origin: 50% 75%;
+  filter: drop-shadow(0 4px 3px rgba(0,0,0,.7));
+  animation: journey-sailing 3.4s ease-in-out infinite;
+}
+.journey-mini-waves {
+  position: absolute;
+  z-index: 3;
+  bottom: -4px;
+  left: -15px;
+  width: 200px;
+  height: 33px;
+  background: url('/journey/images/001-landing/waves-pot.png') repeat-x center / auto 33px;
+  opacity: .8;
+  animation: journey-waves 4s ease-in-out infinite alternate;
+}
+.journey-mini-rain {
+  position: absolute;
+  z-index: 4;
+  inset: -25px;
+  opacity: .23;
+  background: repeating-linear-gradient(110deg, transparent 0 13px, #ccd6dc 14px, transparent 15px 28px);
+  mask-image: repeating-linear-gradient(0deg, transparent 0 8px, #000 10px 18px, transparent 20px 42px);
+  animation: journey-rain .65s linear infinite;
+}
+.journey-mini-lightning {
+  position: absolute;
+  width: 44px;
+  height: 74px;
+  object-fit: contain;
+  top: -9px;
+  left: 75px;
+  opacity: .15;
+  animation: journey-lightning 8s ease-in-out infinite;
+}
+.journey-cta:hover, .journey-cta:focus-visible { border-color: var(--accent); }
+.journey-cta:hover .journey-cta-label, .journey-cta:focus-visible .journey-cta-label { color: var(--accent); }
+.journey-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@keyframes journey-sailing {
+  0%, 100% { transform: translate(0, 2px) rotate(-7deg); }
+  50% { transform: translate(4px, -4px) rotate(6deg); }
+}
+@keyframes journey-clouds { to { transform: translateX(15px); } }
+@keyframes journey-waves { to { transform: translate(-12px, 3px); } }
+@keyframes journey-rain { to { transform: translate(-15px, 21px); } }
+@keyframes journey-lightning {
+  0%, 75%, 100% { opacity: 0; }
+  83% { opacity: .5; }
+  92% { opacity: .08; }
+}
+@media (max-width: 380px) {
+  .journey-mini { flex-basis: 132px; }
+  .journey-cta-label { font-size: 14px; padding-right: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journey-mini img, .journey-mini-waves, .journey-mini-rain { animation: none; }
+  .journey-cta, .journey-cta-label { transition: none; }
+}
+
 /* ---------- Experience ---------- */
 .timeline {
   display: flex;
