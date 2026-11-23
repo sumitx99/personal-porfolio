@@ -1,12 +1,10 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { profile, roles, experience, careerChapters, education, projects, skills, experiments, certificationCounts, coding } from '../data'
-import { useIsSmall, useReveal } from '../hooks'
+import { useReveal } from '../hooks'
 import SectionHead from '../components/SectionHead'
 import ProjectShowcase from '../components/ProjectShowcase'
 import ProfilePortrait from '../components/ProfilePortrait'
-
-const HeroScene = lazy(() => import('../components/HeroScene'))
 
 function RotatingWord() {
   const [i, setI] = useState(0)
@@ -32,14 +30,9 @@ function Clock() {
   return <span>{t} IST</span>
 }
 
-function Hero({ small }) {
+function Hero() {
   return (
     <section className="hero" id="top">
-      <div className="hero-canvas" aria-hidden="true">
-        <Suspense fallback={null}>
-          <HeroScene small={small} />
-        </Suspense>
-      </div>
       <div className="hero-content">
         <p className="eyebrow">
           <span className="dot" /> Open to interesting problems
@@ -119,7 +112,16 @@ function Work() {
   return (
     <section id="work" className="section">
       <SectionHead index="02" title="Experience" kicker="Where I’ve shipped code." />
-      <a href="/journey/" className="btn btn-ghost" style={{ marginBottom: 32 }}>Follow the journey <span aria-hidden="true">↗</span></a>
+      <a href="/journey/" className="journey-cta">
+        <span className="journey-mini" aria-hidden="true">
+          <img className="journey-mini-clouds" src="/journey/images/007-storm-arrived/clouds-pot.png" alt="" loading="lazy" />
+          <img className="journey-mini-lightning" src="/journey/images/007-storm-arrived/lightning.png" alt="" loading="lazy" />
+          <img className="journey-mini-boat" src="/journey/images/001-landing/boat-01.png" alt="" loading="lazy" />
+          <span className="journey-mini-waves" />
+          <span className="journey-mini-rain" />
+        </span>
+        <span className="journey-cta-label">Follow the journey</span>
+      </a>
       <div className="timeline">
         {experience.map((job) => (
           <article className="job reveal" key={job.company}>
@@ -370,11 +372,10 @@ function Contact() {
 }
 
 export default function Home() {
-  const small = useIsSmall()
   useReveal()
   return (
     <>
-      <Hero small={small} />
+      <Hero />
       <About />
       <Work />
       <Projects />

@@ -1,12 +1,19 @@
 {
   "rewrites": [
     {
-      "source": "/journey",
+      "source": "/journey/",
       "destination": "/journey/index.html"
     },
     {
-      "source": "/((?!api/|google6a67b5157486dff2\\.html$|sitemap\\.xml$|robots\\.txt$).*)",
+      "source": "/((?!api/|journey/|booking/|portfolio-header\\.css$|google6a67b5157486dff2\\.html$|sitemap\\.xml$|robots\\.txt$).*)",
       "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/journey",
+      "destination": "/journey/",
+      "permanent": true
     }
   ]
 }
