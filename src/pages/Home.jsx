@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { profile, roles, experience, careerChapters, education, projects, skills, experiments, certificationCounts, coding } from '../data'
-import { useReveal } from '../hooks'
+import { useIsSmall, useReveal } from '../hooks'
 import SectionHead from '../components/SectionHead'
 import ProjectShowcase from '../components/ProjectShowcase'
 import ProfilePortrait from '../components/ProfilePortrait'
+
+const HeroScene = lazy(() => import('../components/HeroScene'))
 
 function RotatingWord() {
   const [i, setI] = useState(0)
@@ -30,9 +32,14 @@ function Clock() {
   return <span>{t} IST</span>
 }
 
-function Hero() {
+function Hero({ small }) {
   return (
     <section className="hero" id="top">
+      <div className="hero-canvas" aria-hidden="true">
+        <Suspense fallback={null}>
+          <HeroScene small={small} />
+        </Suspense>
+      </div>
       <div className="hero-content">
         <p className="eyebrow">
           <span className="dot" /> Open to interesting problems
@@ -372,10 +379,11 @@ function Contact() {
 }
 
 export default function Home() {
+  const small = useIsSmall()
   useReveal()
   return (
     <>
-      <Hero />
+      <Hero small={small} />
       <About />
       <Work />
       <Projects />
